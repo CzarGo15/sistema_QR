@@ -246,13 +246,13 @@
                 titulo.className = 'text-2xl font-black mb-2 text-emerald-600';
                 detalle.innerText = texto;
                 btnContinuar.className = 'w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4';
+                btnContinuar.innerText = 'Siguiente Boleto'; // Texto actualizado
                 
-                // Mostrar tarjeta
+                // Mostrar tarjeta (Obliga al staff a tocar el botón para continuar)
                 overlay.classList.remove('opacity-0', 'pointer-events-none');
                 card.classList.remove('translate-y-10');
                 
-                // Auto-cierre ultra rápido si está aprobado
-                setTimeout(cerrarModal, 1500);
+                // Se eliminó el auto-cierre (setTimeout) para dar control 100% manual al staff
 
             } else {
                 playBeep(false);
