@@ -2,324 +2,246 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Evitar zoom táctil accidental en celulares -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Escáner VIP - Exelaris</title>
+    <title>Escáner VIP Nube - Exelaris</title>
     
-    <!-- Librería de lectura de QR (Core) -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    
-    <!-- Tailwind CSS (Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Íconos (Phosphor Icons) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
+    <!-- LIBRERÍAS DE FIREBASE -->
+    <script type="module">
+        // Importamos Firebase directamente desde Google
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // =====================================================================
+        // ⚠️ CONFIGURACIÓN OFICIAL DE EXELARIS FIREBASE ⚠️
+        // =====================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEuH4iZDXxqSxHR9-hr1MjNQ-zaEOIBiw",
+            authDomain: "sistemaqr-a4d32.firebaseapp.com",
+            projectId: "sistemaqr-a4d32",
+            storageBucket: "sistemaqr-a4d32.firebasestorage.app",
+            messagingSenderId: "155568074854",
+            appId: "1:155568074854:web:db20fe57f935cbc1c5bda7",
+            measurementId: "G-VTZN06CCGG"
+        };
+
+        // Inicializamos Firebase y la Base de Datos
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Exponemos la base de datos al resto de nuestro código
+        window.db = db;
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.updateDoc = updateDoc;
+    </script>
+
     <style>
         body { background-color: #020617; font-family: 'Segoe UI', system-ui, sans-serif; }
-        
-        /* Efecto Cristal para los paneles */
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Ocultar barra de desplazamiento */
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
-        
-        /* === ESTILOS DEL ESCÁNER DE CÁMARA === */
         #reader { width: 100%; border-radius: 1rem; overflow: hidden; position: relative; border: none !important; }
         #reader video { object-fit: cover; }
-        
-        /* Animación fluida de la línea láser */
-        .scan-laser {
-            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background-color: #3b82f6; 
-            box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6;
-            animation: scan 2.5s infinite ease-in-out; 
-            z-index: 10; display: none;
-        }
-        
-        @keyframes scan {
-            0% { top: 0; }
-            50% { top: calc(100% - 2px); }
-            100% { top: 0; }
-        }
+        .scan-laser { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6; animation: scan 2.5s infinite ease-in-out; z-index: 10; display: none; }
+        @keyframes scan { 0% { top: 0; } 50% { top: calc(100% - 2px); } 100% { top: 0; } }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col items-center justify-between relative text-slate-100">
 
-    <!-- === 1. PANTALLA DE LOGIN (SEGURIDAD STAFF) === -->
+    <!-- LOGIN -->
     <div id="login-overlay" class="absolute inset-0 z-[60] bg-slate-950 flex flex-col items-center justify-center p-6 transition-opacity duration-300">
         <div class="w-full max-w-sm glass-panel p-8 rounded-3xl border border-slate-700/50 shadow-2xl relative overflow-hidden">
-            <!-- Brillo de fondo decorativo -->
             <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-600 rounded-full mix-blend-multiply filter blur-2xl opacity-20"></div>
-            
             <div class="text-center mb-8 relative z-10">
-                <!-- Logotipo Exelaris -->
-                <img src="https://scontent.fmtt1-2.fna.fbcdn.net/v/t39.30808-6/417434020_303688476055215_1445176769765197732_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=D6pDiFp8cB8Q7kNvwEOaVjE&_nc_oc=AdpIRSFXdSJ6qURs-MZHgdtxi_6t0rnSp1eN6AW3Gyocs5JDgYIHPySVF1IX4hi87Js&_nc_zt=23&_nc_ht=scontent.fmtt1-2.fna&_nc_gid=mLgeoM4bkGee67in0hKPAQ&_nc_ss=7b289&oh=00_Af4BU9JpPk-8fBE9hM4YqtGtaFfs31IaSVs5p2rROdS7wA&oe=6A1BD4FB" alt="Exelaris Logo" class="w-24 h-24 mx-auto rounded-2xl mb-4 border-2 border-blue-500/30 object-cover shadow-lg">
-                <h2 class="text-2xl font-bold text-white">Exelaris</h2>
-                <p class="text-sm text-slate-400 mt-1">Autenticación de Staff</p>
+                <img src="https://scontent.fmtt1-2.fna.fbcdn.net/v/t39.30808-6/417434020_303688476055215_1445176769765197732_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=F4aPJ1kx9TQQ7kNvwGWyR3a&_nc_oc=AdqgCYZRXQZ9MDOykXBbFCNTg43OLzi-V8AEgMnRzaHI_Ocurmk1xayr-FyZbKchkqo&_nc_zt=23&_nc_ht=scontent.fmtt1-2.fna&_nc_gid=AD8higQwxWAY6wrxJa-7oA&_nc_ss=7b2a8&oh=00_Af8N0SXnn2mAfsCnhhGfEZv_1EmUsGFlrzhwh67_v2HwrA&oe=6A250F7B" alt="Exelaris" class="w-24 h-24 mx-auto rounded-2xl mb-4 border-2 border-blue-500/30 object-cover shadow-lg">
+                <h2 class="text-2xl font-bold text-white">Exelaris Cloud</h2>
+                <p class="text-sm text-slate-400 mt-1">Conectando a servidor...</p>
             </div>
-
             <form id="login-form" class="space-y-4 relative z-10">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Operador</label>
-                    <select id="input-operador" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none" required>
+                    <select id="input-operador" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 focus:outline-none focus:border-blue-500 appearance-none" required>
                         <option value="" disabled selected>Selecciona un operador</option>
-                        <option value="Operador 1">Operador 1</option>
-                        <option value="Operador 2">Operador 2</option>
-                        <option value="Operador 3">Operador 3</option>
-                        <option value="Operador 4">Operador 4</option>
-                        <option value="Supervisor">Supervisor</option>
+                        <option value="Operador 1">Operador 1</option><option value="Operador 2">Operador 2</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Punto de Acceso</label>
-                    <select id="input-acceso" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none" required>
-                        <option value="" disabled selected>Selecciona la puerta</option>
-                        <option value="Acceso 1 - General">Acceso 1 - General</option>
-                        <option value="Acceso 2 - General">Acceso 2 - General</option>
-                        <option value="Acceso VIP">Acceso VIP</option>
-                        <option value="Acceso Staff">Acceso Staff</option>
-                    </select>
+                    <input type="password" id="input-pin" placeholder="PIN: 1234" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 text-center tracking-widest focus:outline-none focus:border-blue-500" required>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">PIN de Seguridad</label>
-                    <input type="password" id="input-pin" placeholder="****" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 text-center tracking-widest text-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl mt-6 shadow-lg shadow-blue-500/30 transition-colors">
-                    Ingresar al Sistema
-                </button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-2">Iniciar Sesión</button>
             </form>
-            <p id="login-error" class="text-rose-500 text-sm text-center mt-4 hidden font-medium">PIN incorrecto. Intenta "1234".</p>
         </div>
     </div>
 
-    <!-- === 2. ENCABEZADO (STATUS BAR) === -->
+    <!-- ENCABEZADO -->
     <header class="w-full max-w-md p-4 flex justify-between items-center glass-panel z-20 absolute top-0">
         <div class="flex items-center gap-3">
-            <img src="https://scontent.fmtt1-2.fna.fbcdn.net/v/t39.30808-6/417434020_303688476055215_1445176769765197732_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=D6pDiFp8cB8Q7kNvwEOaVjE&_nc_oc=AdpIRSFXdSJ6qURs-MZHgdtxi_6t0rnSp1eN6AW3Gyocs5JDgYIHPySVF1IX4hi87Js&_nc_zt=23&_nc_ht=scontent.fmtt1-2.fna&_nc_gid=mLgeoM4bkGee67in0hKPAQ&_nc_ss=7b289&oh=00_Af4BU9JpPk-8fBE9hM4YqtGtaFfs31IaSVs5p2rROdS7wA&oe=6A1BD4FB" alt="Exelaris Mini" class="w-10 h-10 rounded-full border border-slate-600 object-cover shadow-sm">
+            <img src="https://scontent.fmtt1-2.fna.fbcdn.net/v/t39.30808-6/417434020_303688476055215_1445176769765197732_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=F4aPJ1kx9TQQ7kNvwGWyR3a&_nc_oc=AdqgCYZRXQZ9MDOykXBbFCNTg43OLzi-V8AEgMnRzaHI_Ocurmk1xayr-FyZbKchkqo&_nc_zt=23&_nc_ht=scontent.fmtt1-2.fna&_nc_gid=AD8higQwxWAY6wrxJa-7oA&_nc_ss=7b2a8&oh=00_Af8N0SXnn2mAfsCnhhGfEZv_1EmUsGFlrzhwh67_v2HwrA&oe=6A250F7B" class="w-10 h-10 rounded-full border border-slate-600">
             <div>
-                <h1 id="header-terminal" class="font-bold text-lg text-white leading-tight">Terminal Inactiva</h1>
-                <p class="text-xs text-slate-400 font-medium">Operador: <span id="header-operator">Ninguno</span></p>
+                <h1 class="font-bold text-sm text-emerald-400 flex items-center gap-1"><i class="ph-fill ph-wifi-high"></i> Conectado</h1>
+                <p class="text-xs text-slate-400" id="header-operator">Ninguno</p>
             </div>
-        </div>
-        <div class="h-10 w-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 shadow-inner text-blue-400 shrink-0">
-            <i class="ph-fill ph-scan text-xl"></i>
         </div>
     </header>
 
-    <!-- === 3. CONTENEDOR PRINCIPAL DEL ESCÁNER === -->
+    <!-- ESCÁNER -->
     <main class="flex-1 w-full flex flex-col items-center justify-center pt-24 pb-10 px-4 z-10">
-        
-        <!-- Botón gigante para arrancar cámara (Necesario para pedir permisos en móvil) -->
         <div id="start-button-container" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-30">
-            <button id="btn-start" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center gap-3">
+            <button id="btn-start" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center gap-3">
                 <i class="ph-fill ph-camera text-2xl"></i> Activar Cámara
             </button>
-            <p class="text-slate-500 mt-4 text-sm text-center max-w-xs">Toca para encender el motor óptico y solicitar permisos de cámara.</p>
         </div>
-
-        <!-- Visor del Lente -->
-        <div class="relative w-full max-w-sm rounded-2xl border-2 border-slate-700 shadow-2xl overflow-hidden bg-black">
-            <!-- Div donde se renderiza el video de la cámara -->
+        <div class="relative w-full max-w-sm rounded-2xl border-2 border-slate-700 overflow-hidden bg-black">
             <div id="reader" class="h-[60vh] max-h-[450px]"></div>
-            
-            <!-- Láser animado -->
             <div id="laser" class="scan-laser"></div>
-            
-            <!-- Marco de encuadre blanco -->
-            <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-                <div class="w-48 h-48 border-2 border-white/20 rounded-xl relative">
-                    <div class="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-blue-500 rounded-tl-xl"></div>
-                    <div class="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-blue-500 rounded-tr-xl"></div>
-                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-blue-500 rounded-bl-xl"></div>
-                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-blue-500 rounded-br-xl"></div>
-                </div>
-            </div>
         </div>
-        
     </main>
 
-    <!-- === 4. OVERLAY DE RESULTADOS (MODAL) === -->
+    <!-- MODAL RESULTADO -->
     <div id="resultado-overlay" class="absolute inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center p-6 opacity-0 pointer-events-none transition-opacity duration-200">
         <div id="card-resultado" class="bg-white rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl transform translate-y-10 transition-transform duration-300">
-            <div id="icono-resultado" class="text-6xl mb-4">✅</div>
-            <h2 id="titulo-resultado" class="text-2xl font-black mb-2 text-slate-800">ACCESO PERMITIDO</h2>
-            <p id="detalle-resultado" class="text-slate-500 mb-6 font-medium">Boleto validado con éxito.</p>
-            <button onclick="cerrarModal()" id="btn-continuar" class="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition-colors">
-                Siguiente Boleto
+            <div id="icono-resultado" class="text-6xl mb-4">⏳</div>
+            <h2 id="titulo-resultado" class="text-2xl font-black mb-2 text-slate-800">Verificando...</h2>
+            <p id="detalle-resultado" class="text-slate-500 mb-6 font-medium">Conectando a la base de datos.</p>
+            <button onclick="cerrarModal()" id="btn-continuar" class="w-full bg-slate-200 text-slate-500 font-bold py-3.5 rounded-xl mt-4 hidden">
+                Cerrar
             </button>
         </div>
     </div>
 
-    <!-- === SCRIPTS === -->
     <script>
-        /* -----------------------------------------
-           SCRIPT 1: LÓGICA DE LOGIN 
-        ----------------------------------------- */
-        const loginForm = document.getElementById('login-form');
-        const loginOverlay = document.getElementById('login-overlay');
-        const headerTerminal = document.getElementById('header-terminal');
-        const headerOperator = document.getElementById('header-operator');
-        const loginError = document.getElementById('login-error');
-
-        // Para demostración, el PIN válido es 1234
-        loginForm.addEventListener('submit', (e) => {
+        // LÓGICA DE LOGIN (Igual que antes)
+        document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const operador = document.getElementById('input-operador').value;
-            const acceso = document.getElementById('input-acceso').value;
-            const pin = document.getElementById('input-pin').value;
-
-            if (pin === "1234") {
-                // Actualizar interfaz del encabezado
-                headerTerminal.innerText = acceso;
-                headerOperator.innerText = operador;
-                
-                // Ocultar pantalla de login
-                loginOverlay.style.opacity = '0';
-                setTimeout(() => { loginOverlay.classList.add('hidden'); }, 300);
-            } else {
-                // Mostrar error si el PIN es incorrecto
-                loginError.classList.remove('hidden');
-                setTimeout(() => loginError.classList.add('hidden'), 3000);
+            if (document.getElementById('input-pin').value === "1234") {
+                document.getElementById('header-operator').innerText = document.getElementById('input-operador').value;
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => document.getElementById('login-overlay').classList.add('hidden'), 300);
             }
         });
 
-        /* -----------------------------------------
-           SCRIPT 2: SINTETIZADOR DE AUDIO
-        ----------------------------------------- */
-        // Creamos tonos puros matemáticamente, no requiere descargar archivos mp3
+        // SINTETIZADOR DE AUDIO
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep(isSuccess) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
             if (isSuccess) {
-                // Bip Agudo (Éxito)
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
             } else {
-                // Zumbido Grave (Error/Duplicado)
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
             }
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
         }
 
-        /* -----------------------------------------
-           SCRIPT 3: LÓGICA DEL MOTOR DE ESCANEO
-        ----------------------------------------- */
-        const boletosEscaneados = new Set(); // Memoria temporal para simular base de datos
+        // CONTROL DEL ESCÁNER Y CONSULTA A FIREBASE
         let html5QrCode;
         let escaneoPausado = false;
-
+        
         const overlay = document.getElementById('resultado-overlay');
         const card = document.getElementById('card-resultado');
         const titulo = document.getElementById('titulo-resultado');
         const icono = document.getElementById('icono-resultado');
         const detalle = document.getElementById('detalle-resultado');
         const btnContinuar = document.getElementById('btn-continuar');
-        const laser = document.getElementById('laser');
 
-        // Función que pinta la alerta visual al leer un QR
-        function mostrarResultado(estado, texto) {
+        // Muestra estado de "cargando" mientras contacta la nube
+        function mostrarCargando() {
             escaneoPausado = true;
-            html5QrCode.pause(); // Congela la cámara para evitar dobles lecturas instantáneas
-            laser.style.display = 'none'; // Ocultar láser
+            html5QrCode.pause();
+            document.getElementById('laser').style.display = 'none';
+            
+            icono.innerText = '☁️';
+            titulo.innerText = 'Validando en Nube...';
+            titulo.className = 'text-2xl font-black mb-2 text-blue-600';
+            detalle.innerText = 'Por favor espera';
+            btnContinuar.classList.add('hidden');
+            
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('translate-y-10');
+        }
 
+        // Pinta el resultado final (Éxito o Error)
+        function pintarResultado(estado, msj1, msj2) {
+            btnContinuar.classList.remove('hidden');
             if (estado === 'EXITO') {
                 playBeep(true);
                 icono.innerText = '✅';
-                titulo.innerText = 'ACCESO PERMITIDO';
+                titulo.innerText = msj1;
                 titulo.className = 'text-2xl font-black mb-2 text-emerald-600';
-                detalle.innerText = texto;
-                btnContinuar.className = 'w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4';
-                btnContinuar.innerText = 'Siguiente Boleto'; // Texto actualizado
-                
-                // Mostrar tarjeta (Obliga al staff a tocar el botón para continuar)
-                overlay.classList.remove('opacity-0', 'pointer-events-none');
-                card.classList.remove('translate-y-10');
-                
-                // Se eliminó el auto-cierre (setTimeout) para dar control 100% manual al staff
-
+                detalle.innerText = msj2;
+                btnContinuar.className = 'w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4';
+                btnContinuar.innerText = 'Siguiente Boleto';
             } else {
                 playBeep(false);
                 icono.innerText = '🛑';
-                titulo.innerText = 'DUPLICADO';
+                titulo.innerText = msj1;
                 titulo.className = 'text-2xl font-black mb-2 text-rose-600';
-                detalle.innerText = texto;
-                btnContinuar.className = 'w-full bg-rose-500 hover:bg-rose-400 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4';
-                btnContinuar.innerText = 'Bloquear y Continuar';
-                
-                // Mostrar tarjeta (Obliga al staff a tocar el botón para continuar)
-                overlay.classList.remove('opacity-0', 'pointer-events-none');
-                card.classList.remove('translate-y-10');
+                detalle.innerText = msj2;
+                btnContinuar.className = 'w-full bg-rose-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4';
+                btnContinuar.innerText = 'Bloquear / Cerrar';
             }
         }
 
-        // Función para ocultar la alerta y reactivar la cámara
         function cerrarModal() {
             overlay.classList.add('opacity-0', 'pointer-events-none');
             card.classList.add('translate-y-10');
-            
             setTimeout(() => { 
                 escaneoPausado = false;
-                laser.style.display = 'block'; // Reactivar láser
-                if(html5QrCode.getState() === 3) { // 3 = PAUSED
-                    html5QrCode.resume();
-                }
+                document.getElementById('laser').style.display = 'block';
+                if(html5QrCode.getState() === 3) html5QrCode.resume();
             }, 300);
         }
 
-        // Evento que se dispara cada vez que la cámara atrapa un código
-        function onScanSuccess(decodedText, decodedResult) {
+        // === EL CEREBRO: CONSULTAR LA BASE DE DATOS REAL ===
+        async function onScanSuccess(decodedText) {
             if (escaneoPausado) return;
-            
-            // SIMULACIÓN DE CONSULTA A BASE DE DATOS
-            if (boletosEscaneados.has(decodedText)) {
-                // Si el QR ya existe en memoria, es clonado o doble escaneo
-                mostrarResultado('ERROR', `¡Alerta! El código ID: ${decodedText.substring(0,8)}... ya ingresó previamente.`);
-            } else {
-                // Si es un QR nuevo, lo guardamos y le damos acceso
-                boletosEscaneados.add(decodedText);
-                mostrarResultado('EXITO', `ID Validado: ${decodedText.substring(0,8)}...`);
+            mostrarCargando(); // Pausa cámara y muestra nube
+
+            try {
+                // 1. Busca el boleto en la colección "boletos" usando el código escaneado como ID
+                const docRef = window.doc(window.db, "boletos", decodedText);
+                const docSnap = await window.getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const datos = docSnap.data();
+                    
+                    // 2. ¿Ya fue usado?
+                    if (datos.estado === "usado") {
+                        pintarResultado('ERROR', '¡Boleto DUPLICADO!', `Este boleto ya fue escaneado a las: ${datos.hora_ingreso}`);
+                    } else {
+                        // 3. Es válido. Actualizamos la BD en tiempo real para "quemarlo"
+                        const horaActual = new Date().toLocaleTimeString();
+                        await window.updateDoc(docRef, {
+                            estado: "usado",
+                            hora_ingreso: horaActual
+                        });
+                        pintarResultado('EXITO', 'ACCESO PERMITIDO', `Boleto Válido. Tipo: ${datos.tipo || 'General'}`);
+                    }
+                } else {
+                    // El código leído no existe en nuestra base de datos
+                    pintarResultado('ERROR', 'Boleto FALSO', `El ID ${decodedText.substring(0,8)} no está registrado en el sistema.`);
+                }
+            } catch (error) {
+                console.error("Error contactando Firebase:", error);
+                pintarResultado('ERROR', 'Falla de Red', 'No se pudo conectar al servidor. Revisa tu internet.');
             }
         }
 
-        // Arranque de la cámara al tocar el botón principal
         document.getElementById('btn-start').addEventListener('click', () => {
             document.getElementById('start-button-container').style.display = 'none';
-            laser.style.display = 'block';
-            
-            // Usamos el constructor Core (Más veloz)
+            document.getElementById('laser').style.display = 'block';
             html5QrCode = new Html5Qrcode("reader");
-
-            const config = {
-                fps: 30, // 30 Cuadros por segundo para lectura en movimiento
-                qrbox: { width: 250, height: 250 }, 
-                aspectRatio: 1.0,
-                disableFlip: false // Soporte para códigos al revés
-            };
-
             html5QrCode.start(
-                { facingMode: "environment" }, // Forzar siempre el lente trasero
-                config,
+                { facingMode: "environment" },
+                { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false },
                 onScanSuccess
-            ).catch(err => {
-                alert("Error: No se pudo acceder a la cámara. Asegúrate de dar los permisos correspondientes.");
-            });
+            ).catch(err => alert("Error de cámara."));
         });
     </script>
 </body>
