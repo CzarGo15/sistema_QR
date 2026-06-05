@@ -1,222 +1,422 @@
-```javascript
-const express = require('express');
-const db = require('../firebase');
+```html
+<!DOCTYPE html>
+<html lang="es">
 
-const router = express.Router();
+<head>
 
-/*
-==================================
-CONSULTAR BOLETO
-POST /api/validar/buscar
-==================================
-*/
+<meta charset="UTF-8">
 
-router.post('/buscar', async (req, res) => {
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-    try {
+<title>EXELARIS | Control de Acceso</title>
 
-        const { uuid } = req.body;
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
-        console.log('================================');
-        console.log('BUSCANDO QR:', uuid);
-        console.log('================================');
+<link rel="preconnect" href="https://fonts.googleapis.com">
 
-        if (!uuid) {
+<link
+href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap"
+rel="stylesheet">
 
-            return res.status(400).json({
-                success: false,
-                error: 'UUID requerido'
-            });
+<style>
 
-        }
+*{
+font-family:'Montserrat',sans-serif;
+}
 
-        const doc = await db
-            .collection('boletos')
-            .doc(uuid)
-            .get();
+body{
+background:
+linear-gradient(
+135deg,
+#020617,
+#111827,
+#312e81
+);
+min-height:100vh;
+}
 
-        if (!doc.exists) {
+.glass{
+background:rgba(255,255,255,.06);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.08);
+}
 
-            console.log('❌ BOLETO NO ENCONTRADO');
+.neon{
+text-shadow:
+0 0 5px #ff00ff,
+0 0 10px #ff00ff,
+0 0 20px #ff00ff;
+}
 
-            return res.json({
-                success: false,
-                error: 'BOLETO NO ENCONTRADO'
-            });
+#reader{
+overflow:hidden;
+border-radius:20px;
+}
 
-        }
+</style>
 
-        const boleto = doc.data();
+</head>
 
-        console.log('FOLIO:', boleto.folio);
-        console.log('ESTADO:', boleto.estado);
-        console.log('UUID:', boleto.uuid);
+<body>
 
-        const estado =
-            String(
-                boleto.estado || ''
-            )
-            .trim()
-            .toLowerCase();
+<div class="container mx-auto p-4">
 
-        if (estado === 'usado') {
+<div class="max-w-xl mx-auto">
 
-            console.log(
-                '🚫 BOLETO YA UTILIZADO'
-            );
+<!-- LOGIN PERFIL -->
 
-            return res.json({
+<div
+id="pantallaPerfil"
+class="glass rounded-3xl p-8">
 
-                success: false,
+<div class="text-center">
 
-                usado: true,
+<div
+class="w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 flex items-center justify-center">
 
-                error: 'BOLETO YA UTILIZADO',
+<span class="text-5xl font-black text-white">
+X
+</span>
 
-                boleto
+</div>
 
-            });
+<h1
+class="text-white text-5xl font-black mt-5 neon">
+EXELARIS
+</h1>
 
-        }
+<p
+class="text-cyan-300 tracking-[6px] mt-2">
+CONTROL DE ACCESO
+</p>
 
-        console.log(
-            '✅ BOLETO ACTIVO'
-        );
+</div>
 
-        return res.json({
+<div class="mt-8 space-y-4">
 
-            success: true,
+<button onclick="seleccionarPerfil('Administrador')" class="w-full p-5 rounded-2xl bg-white font-bold">
+Administrador
+</button>
 
-            boleto
+<button onclick="seleccionarPerfil('Operador')" class="w-full p-5 rounded-2xl bg-white font-bold">
+Operador
+</button>
 
-        });
+<button onclick="seleccionarPerfil('Validador 1')" class="w-full p-5 rounded-2xl bg-white font-bold">
+Validador 1
+</button>
 
-    } catch (error) {
+<button onclick="seleccionarPerfil('Validador 2')" class="w-full p-5 rounded-2xl bg-white font-bold">
+Validador 2
+</button>
 
-        console.error(
-            'ERROR BUSCAR:',
-            error
-        );
+<button onclick="seleccionarPerfil('Validador 3')" class="w-full p-5 rounded-2xl bg-white font-bold">
+Validador 3
+</button>
 
-        return res.status(500).json({
+</div>
 
-            success: false,
+</div>
 
-            error: error.message
+<!-- SCANNER -->
 
-        });
+<div
+id="pantallaScanner"
+class="hidden">
 
-    }
+<div class="glass rounded-3xl p-6">
 
-});
+<div class="text-center">
 
-/*
-==================================
+<h2
+id="perfilActivo"
+class="text-white text-3xl font-black">
+</h2>
+
+<p class="text-green-400 mt-2">
+🟢 Sistema listo
+</p>
+
+</div>
+
+<div class="mt-6 bg-white rounded-3xl p-2">
+<div id="reader"></div>
+</div>
+
+<div
+id="resultado"
+class="hidden mt-6">
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const API =
+'https://fiestaretro-api.onrender.com';
+
+let perfilSeleccionado = '';
+let boletoActual = null;
+let html5QrCode = null;
+
+function seleccionarPerfil(perfil){
+
+perfilSeleccionado = perfil;
+
+document.getElementById(
+'perfilActivo'
+).innerHTML = perfil;
+
+document.getElementById(
+'pantallaPerfil'
+).classList.add('hidden');
+
+document.getElementById(
+'pantallaScanner'
+).classList.remove('hidden');
+
+iniciarScanner();
+
+}
+
+async function iniciarScanner(){
+
+html5QrCode =
+new Html5Qrcode("reader");
+
+await html5QrCode.start(
+
+{
+facingMode:"environment"
+},
+
+{
+fps:10,
+qrbox:250
+},
+
+async(decodedText)=>{
+
+await html5QrCode.stop();
+
+buscarBoleto(
+decodedText
+);
+
+}
+
+);
+
+}
+
+async function buscarBoleto(uuid){
+
+const respuesta =
+await fetch(
+
+`${API}/api/validar/buscar`,
+
+{
+method:'POST',
+
+headers:{
+'Content-Type':'application/json'
+},
+
+body:JSON.stringify({
+uuid
+})
+}
+
+);
+
+const data =
+await respuesta.json();
+
+const resultado =
+document.getElementById(
+'resultado'
+);
+
+resultado.classList.remove(
+'hidden'
+);
+
+if(!data.success){
+
+if(data.usado){
+
+resultado.innerHTML = `
+
+<div class="bg-red-500 rounded-3xl p-6">
+
+<h2 class="text-3xl font-black">
+❌ BOLETO UTILIZADO
+</h2>
+
+<p class="mt-4">
+<strong>Folio:</strong>
+${data.boleto.folio}
+</p>
+
+<p>
+<strong>Nombre:</strong>
+${data.boleto.nombre}
+</p>
+
+<p>
+<strong>Validado por:</strong>
+${data.boleto.validadoPor || '-'}
+</p>
+
+</div>
+
+`;
+
+}else{
+
+resultado.innerHTML = `
+
+<div class="bg-red-500 rounded-3xl p-6">
+
+<h2 class="text-3xl font-black">
+❌ QR INVÁLIDO
+</h2>
+
+<p class="mt-2">
+${data.error}
+</p>
+
+</div>
+
+`;
+
+}
+
+setTimeout(()=>{
+
+location.reload();
+
+},3000);
+
+return;
+
+}
+
+boletoActual =
+data.boleto;
+
+resultado.innerHTML = `
+
+<div class="bg-green-500 rounded-3xl p-6">
+
+<h2 class="text-3xl font-black">
+✅ BOLETO VÁLIDO
+</h2>
+
+<p class="mt-4">
+<strong>Folio:</strong>
+${boletoActual.folio}
+</p>
+
+<p>
+<strong>Nombre:</strong>
+${boletoActual.nombre}
+</p>
+
+<p>
+<strong>Tipo:</strong>
+${boletoActual.tipo}
+</p>
+
+<button
+
+onclick="confirmarAcceso()"
+
+class="mt-6 w-full bg-black text-white p-4 rounded-2xl font-black">
+
 CONFIRMAR ACCESO
-POST /api/validar/confirmar
-==================================
-*/
 
-router.post('/confirmar', async (req, res) => {
+</button>
 
-    try {
+</div>
 
-        const {
-            uuid,
-            validador
-        } = req.body;
+`;
 
-        console.log(
-            'CONFIRMANDO:',
-            uuid
-        );
+}
 
-        const ref =
-            db.collection('boletos')
-                .doc(uuid);
+async function confirmarAcceso(){
 
-        const doc =
-            await ref.get();
+const respuesta =
+await fetch(
 
-        if (!doc.exists) {
+`${API}/api/validar/confirmar`,
 
-            return res.json({
+{
+method:'POST',
 
-                success: false,
+headers:{
+'Content-Type':'application/json'
+},
 
-                error: 'BOLETO NO ENCONTRADO'
+body:JSON.stringify({
 
-            });
+uuid:
+boletoActual.uuid,
 
-        }
+validador:
+perfilSeleccionado
 
-        const boleto =
-            doc.data();
+})
+}
 
-        const estado =
-            String(
-                boleto.estado || ''
-            )
-            .trim()
-            .toLowerCase();
+);
 
-        if (estado === 'usado') {
+const data =
+await respuesta.json();
 
-            console.log(
-                '🚫 INTENTO DE REUSO'
-            );
+if(data.success){
 
-            return res.json({
+document.getElementById(
+'resultado'
+).innerHTML = `
 
-                success: false,
+<div class="bg-green-600 rounded-3xl p-8 text-center">
 
-                error: 'BOLETO YA UTILIZADO'
+<h2 class="text-4xl font-black">
+🎉 ACCESO AUTORIZADO
+</h2>
 
-            });
+<p class="mt-4">
+Validado por:
+<strong>${perfilSeleccionado}</strong>
+</p>
 
-        }
+</div>
 
-        await ref.update({
+`;
 
-            estado: 'usado',
+setTimeout(()=>{
 
-            validadoPor: validador,
+location.reload();
 
-            fechaValidacion: new Date()
+},2500);
 
-        });
+}
 
-        console.log(
-            '✅ ACCESO REGISTRADO:',
-            boleto.folio
-        );
+}
 
-        return res.json({
+</script>
 
-            success: true,
-
-            mensaje: 'ACCESO REGISTRADO'
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            'ERROR CONFIRMAR:',
-            error
-        );
-
-        return res.status(500).json({
-
-            success: false,
-
-            error: error.message
-
-        });
-
-    }
-
-});
-
-module.exports = router;
+</body>
+</html>
 ```
