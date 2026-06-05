@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 
@@ -10,119 +11,248 @@ name="viewport"
 content="width=device-width, initial-scale=1.0">
 
 <title>
-Validador Fiesta Retro
+EXELARIS | Validador
 </title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
-
 <script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link
+href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap"
+rel="stylesheet">
+
+<style>
+
+*{
+font-family:'Montserrat',sans-serif;
+}
+
+body{
+background:
+linear-gradient(
+135deg,
+#020617,
+#111827,
+#312e81
+);
+min-height:100vh;
+}
+
+.glass{
+background:rgba(255,255,255,.06);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.08);
+}
+
+.neon{
+text-shadow:
+0 0 5px #ff00ff,
+0 0 10px #ff00ff,
+0 0 20px #ff00ff;
+}
+
+#reader{
+border-radius:20px;
+overflow:hidden;
+}
+
+</style>
 
 </head>
 
-<body
-class="
-bg-slate-950
-min-h-screen
-text-white
-p-8">
+<body>
+
+<div class="container mx-auto px-4 py-8">
+
+<div class="max-w-4xl mx-auto">
+
+<div class="text-center mb-8">
 
 <div
 class="
-max-w-3xl
-mx-auto">
+w-28
+h-28
+mx-auto
+rounded-full
+bg-gradient-to-r
+from-fuchsia-500
+to-cyan-400
+flex
+items-center
+justify-center">
+
+<span
+class="
+text-white
+text-5xl
+font-black">
+
+X
+
+</span>
+
+</div>
 
 <h1
 class="
+text-white
 text-5xl
 font-black
-text-center">
+mt-5
+neon">
 
-🎫 VALIDADOR
+EXELARIS
 
 </h1>
 
 <p
 class="
-text-center
-text-slate-400
-mt-3">
+text-cyan-300
+tracking-[8px]
+mt-2">
 
-Fiesta Retro
+CONTROL DE ACCESO
 
 </p>
+
+</div>
+
+<div
+class="
+glass
+rounded-3xl
+p-6">
+
+<div
+class="
+grid
+md:grid-cols-2
+gap-4">
 
 <select
 id="perfil"
 class="
-w-full
-mt-8
 p-4
 rounded-xl
 text-black">
 
-<option>
-Administrador
-</option>
-
-<option>
-Validador 1
-</option>
-
-<option>
-Validador 2
-</option>
-
-<option>
-Validador 3
-</option>
+<option>Administrador</option>
+<option>Validador 1</option>
+<option>Validador 2</option>
+<option>Validador 3</option>
 
 </select>
 
-<div
-id="reader"
+<select
+id="camara"
 class="
-mt-8
-bg-white
+p-4
 rounded-xl
-p-4">
+text-black">
+</select>
+
+</div>
+
+<div
+class="
+mt-6
+bg-white
+rounded-3xl
+overflow-hidden">
+
+<div id="reader"></div>
+
 </div>
 
 <div
 id="resultado"
 class="
-mt-8
 hidden
-bg-slate-900
-rounded-xl
-p-6">
+mt-6">
+</div>
+
+</div>
+
 </div>
 
 </div>
 
 <script>
 
+const API =
+'https://fiestaretro-api.onrender.com';
+
 let boletoActual = null;
 
-function iniciarScanner(){
+let html5QrCode = null;
 
-const html5QrCode =
-new Html5Qrcode(
-"reader"
+async function iniciarScanner(){
+
+const selector =
+document.getElementById(
+'camara'
 );
 
-Html5Qrcode
-.getCameras()
-.then(cameras=>{
+const cameras =
+await Html5Qrcode.getCameras();
 
-if(cameras.length){
+selector.innerHTML='';
 
-html5QrCode.start(
+cameras.forEach(cam=>{
 
-cameras[0].id,
+const option =
+document.createElement('option');
+
+option.value = cam.id;
+
+option.text =
+cam.label || cam.id;
+
+selector.appendChild(option);
+
+});
+
+let camaraTrasera =
+cameras.find(cam=>
+cam.label.toLowerCase().includes('back')
+);
+
+if(!camaraTrasera){
+
+camaraTrasera =
+cameras[cameras.length-1];
+
+}
+
+selector.value =
+camaraTrasera.id;
+
+iniciarCamara(
+camaraTrasera.id
+);
+
+selector.onchange = ()=>{
+
+location.reload();
+
+};
+
+}
+
+async function iniciarCamara(cameraId){
+
+html5QrCode =
+new Html5Qrcode("reader");
+
+await html5QrCode.start(
+
+cameraId,
 
 {
 fps:10,
-qrbox:250
+qrbox:300
 },
 
 async(decodedText)=>{
@@ -139,24 +269,25 @@ decodedText
 
 }
 
-});
-
-}
-
 async function buscarBoleto(uuid){
 
 const respuesta =
 await fetch(
-'http://localhost:3000/api/validar/buscar',
+
+`${API}/api/validar/buscar`,
+
 {
 method:'POST',
+
 headers:{
 'Content-Type':'application/json'
 },
+
 body:JSON.stringify({
 uuid
 })
 }
+
 );
 
 const data =
@@ -173,16 +304,40 @@ resultado.classList.remove(
 
 if(!data.success){
 
-resultado.innerHTML = `
-<div class="text-red-500 text-3xl font-black">
-❌ ${data.error}
+resultado.innerHTML=`
+
+<div
+class="
+bg-red-500
+rounded-3xl
+p-8
+text-center">
+
+<h2
+class="
+text-4xl
+font-black">
+
+❌ QR INVÁLIDO
+
+</h2>
+
+<p
+class="mt-3">
+
+${data.error}
+
+</p>
+
 </div>
+
 `;
 
-setTimeout(
-iniciarScanner,
-3000
-);
+setTimeout(()=>{
+
+location.reload();
+
+},3000);
 
 return;
 
@@ -191,17 +346,40 @@ return;
 boletoActual =
 data.boleto;
 
-resultado.innerHTML = `
+resultado.innerHTML=`
 
-<h2 class="text-green-400 text-4xl font-black">
+<div
+class="
+${
+boletoActual.estado==='activo'
+?
+'bg-green-500'
+:
+'bg-red-500'
+}
+rounded-3xl
+p-8">
 
-${boletoActual.estado === 'activo'
-? '✅ BOLETO VÁLIDO'
-: '❌ YA UTILIZADO'}
+<h2
+class="
+text-4xl
+font-black">
+
+${
+boletoActual.estado==='activo'
+?
+'✅ BOLETO VÁLIDO'
+:
+'❌ BOLETO UTILIZADO'
+}
 
 </h2>
 
-<div class="mt-6 space-y-2">
+<div
+class="
+mt-6
+space-y-3
+text-lg">
 
 <p>
 <strong>Folio:</strong>
@@ -231,18 +409,22 @@ ${boletoActual.estado}
 </div>
 
 ${
-boletoActual.estado === 'activo'
+boletoActual.estado==='activo'
 ?
 `
 <button
+
 onclick="confirmarAcceso()"
+
 class="
 mt-8
 w-full
-bg-green-500
-p-4
-rounded-xl
-font-bold">
+bg-black
+text-white
+p-5
+rounded-2xl
+font-black
+text-xl">
 
 CONFIRMAR ACCESO
 
@@ -252,6 +434,8 @@ CONFIRMAR ACCESO
 ''
 }
 
+</div>
+
 `;
 
 }
@@ -260,12 +444,16 @@ async function confirmarAcceso(){
 
 const respuesta =
 await fetch(
-'http://localhost:3000/api/validar/confirmar',
+
+`${API}/api/validar/confirmar`,
+
 {
 method:'POST',
+
 headers:{
 'Content-Type':'application/json'
 },
+
 body:JSON.stringify({
 
 uuid:
@@ -278,6 +466,7 @@ document.getElementById(
 
 })
 }
+
 );
 
 const data =
@@ -288,20 +477,28 @@ if(data.success){
 document
 .getElementById(
 'resultado'
-)
-.innerHTML = `
+).innerHTML = `
 
 <div
 class="
-text-green-400
-text-4xl
+bg-green-500
+rounded-3xl
+p-8
+text-center">
+
+<h2
+class="
+text-5xl
 font-black">
 
-✅ ACCESO REGISTRADO
+🎉 ACCESO AUTORIZADO
 
-</div>
+</h2>
 
-<p class="mt-4">
+<p
+class="
+mt-4
+text-xl">
 
 Validado por:
 
@@ -315,17 +512,15 @@ ${document.getElementById(
 
 </p>
 
+</div>
+
 `;
 
 setTimeout(()=>{
 
 location.reload();
 
-},3000);
-
-}else{
-
-alert(data.error);
+},2500);
 
 }
 
@@ -336,5 +531,5 @@ iniciarScanner();
 </script>
 
 </body>
-
 </html>
+```
