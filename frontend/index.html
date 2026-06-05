@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fiesta Retro</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+font-family:'Montserrat',sans-serif;
+}
+
+body{
+background:
+linear-gradient(
+135deg,
+#020617,
+#111827,
+#312e81
+);
+min-height:100vh;
+}
+
+.glass{
+background:rgba(255,255,255,.06);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.08);
+}
+
+.neon{
+text-shadow:
+0 0 5px #ff00ff,
+0 0 10px #ff00ff,
+0 0 20px #ff00ff;
+}
+
+.ticket-option{
+transition:.25s;
+cursor:pointer;
+}
+
+.ticket-option:hover{
+transform:translateY(-5px);
+}
+
+.selected{
+border:3px solid #9333ea !important;
+box-shadow:0 0 25px rgba(147,51,234,.6);
+}
+
+.flyer-gradient{
+background:
+linear-gradient(
+180deg,
+rgba(0,0,0,.1),
+rgba(0,0,0,.8)
+);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container mx-auto px-4 py-10">
+
+<div class="grid xl:grid-cols-3 gap-8">
+
+<!-- LOGO -->
+
+<div class="glass rounded-3xl overflow-hidden">
+
+<div class="h-full flex flex-col justify-center items-center p-10">
+
+<div
+class="w-36 h-36 rounded-full
+bg-gradient-to-r
+from-fuchsia-500
+to-cyan-400
+flex items-center justify-center">
+
+<span class="text-6xl font-black text-white">
+X
+</span>
+
+</div>
+
+<h1 class="text-white text-6xl font-black mt-6 neon">
+EXELARIS
+</h1>
+
+<p class="text-cyan-300 tracking-[8px] mt-3">
+EVENTOS
+</p>
+
+</div>
+
+</div>
+
+<!-- FLYER -->
+
+<div class="glass rounded-3xl overflow-hidden">
+
+<div class="relative h-full min-h-[650px]">
+
+<img
+src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200"
+class="absolute inset-0 w-full h-full object-cover">
+
+<div class="absolute inset-0 flyer-gradient"></div>
+
+<div class="absolute inset-0 p-8 flex flex-col justify-between">
+
+<div class="text-center">
+
+<p class="text-white tracking-[6px] text-sm">
+EXELARIS PRESENTA
+</p>
+
+<h1 class="text-white font-black text-6xl mt-10 leading-none">
+
+FIESTA
+
+<span
+class="block
+bg-gradient-to-r
+from-fuchsia-500
+to-cyan-400
+bg-clip-text
+text-transparent">
+
+RETRO
+
+</span>
+
+</h1>
+
+<p class="text-yellow-300 text-3xl font-bold mt-6">
+70's • 80's • 90's
+</p>
+
+</div>
+
+<div>
+
+<div class="bg-black/40 rounded-2xl p-5">
+
+<p class="text-yellow-300 text-3xl font-black">
+31 OCTUBRE 2026
+</p>
+
+<p class="text-cyan-300 mt-2">
+PUERTAS ABREN 20:00 HRS
+</p>
+
+<p class="text-white mt-4 font-bold">
+SALÓN SUTERM
+</p>
+
+<p class="text-slate-300 text-sm">
+Av. Mariano Matamoros 1128
+Coatzacoalcos, Veracruz
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- COMPRA -->
+
+<div class="glass rounded-3xl p-8">
+
+<h2 class="text-white text-4xl font-black">
+PROCESO DE COMPRA
+</h2>
+
+<p class="text-slate-300 mt-2">
+Modo pruebas
+</p>
+
+<div class="mt-8">
+
+<p class="text-white mb-3">
+Tipo de boleto
+</p>
+
+<div class="grid gap-4">
+
+<div
+id="vipCard"
+class="ticket-option selected bg-white rounded-2xl p-5">
+
+<div class="flex justify-between">
+
+<div>
+
+<h3 class="text-purple-700 text-3xl font-black">
+VIP
+</h3>
+
+<p class="text-gray-600">
+Acceso preferente
+</p>
+
+</div>
+
+<p class="text-3xl font-black">
+$350
+</p>
+
+</div>
+
+</div>
+
+<div
+id="generalCard"
+class="ticket-option bg-white rounded-2xl p-5">
+
+<div class="flex justify-between">
+
+<div>
+
+<h3 class="text-blue-600 text-3xl font-black">
+GENERAL
+</h3>
+
+<p class="text-gray-600">
+Acceso general
+</p>
+
+</div>
+
+<p class="text-3xl font-black">
+$250
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="mt-8">
+
+<label class="text-white">
+Cantidad
+</label>
+
+<input
+id="cantidad"
+type="number"
+value="1"
+min="1"
+max="10"
+class="w-full mt-2 rounded-xl p-4">
+
+</div>
+
+<div class="mt-8 space-y-4">
+
+<input
+id="nombre"
+type="text"
+placeholder="Nombre completo"
+class="w-full rounded-xl p-4">
+
+<input
+id="correo"
+type="email"
+placeholder="Correo electrónico"
+class="w-full rounded-xl p-4">
+
+<input
+id="telefono"
+type="text"
+placeholder="Teléfono"
+class="w-full rounded-xl p-4">
+
+</div>
+
+<div class="mt-8 text-center">
+
+<p
+id="total"
+class="text-white text-5xl font-black">
+
+$350
+
+</p>
+
+</div>
+
+<button
+id="btnComprar"
+class="w-full mt-8
+bg-gradient-to-r
+from-purple-600
+to-fuchsia-500
+text-white
+font-black
+py-5
+rounded-2xl">
+
+GENERAR BOLETOS
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let precio = 350;
+let tipo = "VIP";
+
+const total = document.getElementById("total");
+
+function actualizar(){
+
+const cantidad =
+parseInt(
+document.getElementById("cantidad").value
+);
+
+total.innerHTML =
+"$" + (cantidad * precio);
+
+}
+
+document
+.getElementById("cantidad")
+.addEventListener("input",actualizar);
+
+document
+.getElementById("vipCard")
+.onclick = ()=>{
+
+tipo="VIP";
+precio=350;
+
+vipCard.classList.add("selected");
+generalCard.classList.remove("selected");
+
+actualizar();
+
+};
+
+document
+.getElementById("generalCard")
+.onclick = ()=>{
+
+tipo="GENERAL";
+precio=250;
+
+generalCard.classList.add("selected");
+vipCard.classList.remove("selected");
+
+actualizar();
+
+};
+
+actualizar();
+
+document
+.getElementById("btnComprar")
+.addEventListener("click", async () => {
+
+    const nombre =
+    document.getElementById("nombre").value;
+
+    const correo =
+    document.getElementById("correo").value;
+
+    const telefono =
+    document.getElementById("telefono").value;
+
+    const cantidad =
+    parseInt(
+      document.getElementById("cantidad").value
+    );
+
+    if(!nombre || !correo){
+
+        alert("Completa los datos");
+
+        return;
+    }
+
+    const respuesta =
+    await fetch(
+      "http://localhost:3000/api/boletos/comprar",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          nombre,
+          correo,
+          telefono,
+          tipo,
+          cantidad
+        })
+      }
+    );
+
+    const data = await respuesta.json();
+
+    if(data.success){
+
+      alert(
+        `${data.total} boletos generados correctamente`
+      );
+
+      console.log(data);
+
+    }else{
+
+      alert("Error al generar boletos");
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

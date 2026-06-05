@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+Validador Fiesta Retro
+</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body
+class="
+bg-slate-950
+min-h-screen
+text-white
+p-8">
+
+<div
+class="
+max-w-3xl
+mx-auto">
+
+<h1
+class="
+text-5xl
+font-black
+text-center">
+
+🎫 VALIDADOR
+
+</h1>
+
+<p
+class="
+text-center
+text-slate-400
+mt-3">
+
+Fiesta Retro
+
+</p>
+
+<select
+id="perfil"
+class="
+w-full
+mt-8
+p-4
+rounded-xl
+text-black">
+
+<option>
+Administrador
+</option>
+
+<option>
+Validador 1
+</option>
+
+<option>
+Validador 2
+</option>
+
+<option>
+Validador 3
+</option>
+
+</select>
+
+<div
+id="reader"
+class="
+mt-8
+bg-white
+rounded-xl
+p-4">
+</div>
+
+<div
+id="resultado"
+class="
+mt-8
+hidden
+bg-slate-900
+rounded-xl
+p-6">
+</div>
+
+</div>
+
+<script>
+
+let boletoActual = null;
+
+function iniciarScanner(){
+
+const html5QrCode =
+new Html5Qrcode(
+"reader"
+);
+
+Html5Qrcode
+.getCameras()
+.then(cameras=>{
+
+if(cameras.length){
+
+html5QrCode.start(
+
+cameras[0].id,
+
+{
+fps:10,
+qrbox:250
+},
+
+async(decodedText)=>{
+
+await html5QrCode.stop();
+
+buscarBoleto(
+decodedText
+);
+
+}
+
+);
+
+}
+
+});
+
+}
+
+async function buscarBoleto(uuid){
+
+const respuesta =
+await fetch(
+'http://localhost:3000/api/validar/buscar',
+{
+method:'POST',
+headers:{
+'Content-Type':'application/json'
+},
+body:JSON.stringify({
+uuid
+})
+}
+);
+
+const data =
+await respuesta.json();
+
+const resultado =
+document.getElementById(
+'resultado'
+);
+
+resultado.classList.remove(
+'hidden'
+);
+
+if(!data.success){
+
+resultado.innerHTML = `
+<div class="text-red-500 text-3xl font-black">
+❌ ${data.error}
+</div>
+`;
+
+setTimeout(
+iniciarScanner,
+3000
+);
+
+return;
+
+}
+
+boletoActual =
+data.boleto;
+
+resultado.innerHTML = `
+
+<h2 class="text-green-400 text-4xl font-black">
+
+${boletoActual.estado === 'activo'
+? '✅ BOLETO VÁLIDO'
+: '❌ YA UTILIZADO'}
+
+</h2>
+
+<div class="mt-6 space-y-2">
+
+<p>
+<strong>Folio:</strong>
+${boletoActual.folio}
+</p>
+
+<p>
+<strong>Nombre:</strong>
+${boletoActual.nombre}
+</p>
+
+<p>
+<strong>Tipo:</strong>
+${boletoActual.tipo}
+</p>
+
+<p>
+<strong>Correo:</strong>
+${boletoActual.correo}
+</p>
+
+<p>
+<strong>Estado:</strong>
+${boletoActual.estado}
+</p>
+
+</div>
+
+${
+boletoActual.estado === 'activo'
+?
+`
+<button
+onclick="confirmarAcceso()"
+class="
+mt-8
+w-full
+bg-green-500
+p-4
+rounded-xl
+font-bold">
+
+CONFIRMAR ACCESO
+
+</button>
+`
+:
+''
+}
+
+`;
+
+}
+
+async function confirmarAcceso(){
+
+const respuesta =
+await fetch(
+'http://localhost:3000/api/validar/confirmar',
+{
+method:'POST',
+headers:{
+'Content-Type':'application/json'
+},
+body:JSON.stringify({
+
+uuid:
+boletoActual.uuid,
+
+validador:
+document.getElementById(
+'perfil'
+).value
+
+})
+}
+);
+
+const data =
+await respuesta.json();
+
+if(data.success){
+
+document
+.getElementById(
+'resultado'
+)
+.innerHTML = `
+
+<div
+class="
+text-green-400
+text-4xl
+font-black">
+
+✅ ACCESO REGISTRADO
+
+</div>
+
+<p class="mt-4">
+
+Validado por:
+
+<strong>
+
+${document.getElementById(
+'perfil'
+).value}
+
+</strong>
+
+</p>
+
+`;
+
+setTimeout(()=>{
+
+location.reload();
+
+},3000);
+
+}else{
+
+alert(data.error);
+
+}
+
+}
+
+iniciarScanner();
+
+</script>
+
+</body>
+
+</html>
