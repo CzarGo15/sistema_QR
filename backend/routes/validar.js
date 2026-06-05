@@ -17,6 +17,10 @@ router.post('/buscar', async (req, res) => {
 
         const { uuid } = req.body;
 
+        console.log('================================');
+        console.log('BUSCANDO QR:', uuid);
+        console.log('================================');
+
         if (!uuid) {
 
             return res.status(400).json({
@@ -33,6 +37,8 @@ router.post('/buscar', async (req, res) => {
 
         if (!doc.exists) {
 
+            console.log('❌ BOLETO NO ENCONTRADO');
+
             return res.json({
                 success: false,
                 error: 'BOLETO NO ENCONTRADO'
@@ -42,7 +48,22 @@ router.post('/buscar', async (req, res) => {
 
         const boleto = doc.data();
 
-        if (boleto.estado === 'usado') {
+        console.log('FOLIO:', boleto.folio);
+        console.log('ESTADO:', boleto.estado);
+        console.log('UUID:', boleto.uuid);
+
+        const estado =
+            String(
+                boleto.estado || ''
+            )
+            .trim()
+            .toLowerCase();
+
+        if (estado === 'usado') {
+
+            console.log(
+                '🚫 BOLETO YA UTILIZADO'
+            );
 
             return res.json({
 
@@ -58,6 +79,10 @@ router.post('/buscar', async (req, res) => {
 
         }
 
+        console.log(
+            '✅ BOLETO ACTIVO'
+        );
+
         return res.json({
 
             success: true,
@@ -68,7 +93,10 @@ router.post('/buscar', async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            'ERROR BUSCAR:',
+            error
+        );
 
         return res.status(500).json({
 
@@ -98,6 +126,11 @@ router.post('/confirmar', async (req, res) => {
             validador
         } = req.body;
 
+        console.log(
+            'CONFIRMANDO:',
+            uuid
+        );
+
         const ref =
             db.collection('boletos')
                 .doc(uuid);
@@ -117,9 +150,21 @@ router.post('/confirmar', async (req, res) => {
 
         }
 
-        const boleto = doc.data();
+        const boleto =
+            doc.data();
 
-        if (boleto.estado === 'usado') {
+        const estado =
+            String(
+                boleto.estado || ''
+            )
+            .trim()
+            .toLowerCase();
+
+        if (estado === 'usado') {
+
+            console.log(
+                '🚫 INTENTO DE REUSO'
+            );
 
             return res.json({
 
@@ -141,6 +186,11 @@ router.post('/confirmar', async (req, res) => {
 
         });
 
+        console.log(
+            '✅ ACCESO REGISTRADO:',
+            boleto.folio
+        );
+
         return res.json({
 
             success: true,
@@ -151,7 +201,10 @@ router.post('/confirmar', async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            'ERROR CONFIRMAR:',
+            error
+        );
 
         return res.status(500).json({
 
