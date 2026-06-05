@@ -1,3 +1,4 @@
+```javascript
 const express = require('express');
 const db = require('../firebase');
 
@@ -39,9 +40,30 @@ router.post('/buscar', async (req, res) => {
 
         }
 
+        const boleto = doc.data();
+
+        if (boleto.estado === 'usado') {
+
+            return res.json({
+
+                success: false,
+
+                usado: true,
+
+                error: 'BOLETO YA UTILIZADO',
+
+                boleto
+
+            });
+
+        }
+
         return res.json({
+
             success: true,
-            boleto: doc.data()
+
+            boleto
+
         });
 
     } catch (error) {
@@ -49,8 +71,11 @@ router.post('/buscar', async (req, res) => {
         console.error(error);
 
         return res.status(500).json({
+
             success: false,
+
             error: error.message
+
         });
 
     }
@@ -83,20 +108,25 @@ router.post('/confirmar', async (req, res) => {
         if (!doc.exists) {
 
             return res.json({
+
                 success: false,
+
                 error: 'BOLETO NO ENCONTRADO'
+
             });
 
         }
 
-        const boleto =
-            doc.data();
+        const boleto = doc.data();
 
         if (boleto.estado === 'usado') {
 
             return res.json({
+
                 success: false,
+
                 error: 'BOLETO YA UTILIZADO'
+
             });
 
         }
@@ -107,8 +137,7 @@ router.post('/confirmar', async (req, res) => {
 
             validadoPor: validador,
 
-            fechaValidacion:
-                new Date()
+            fechaValidacion: new Date()
 
         });
 
@@ -116,8 +145,7 @@ router.post('/confirmar', async (req, res) => {
 
             success: true,
 
-            mensaje:
-                'ACCESO REGISTRADO'
+            mensaje: 'ACCESO REGISTRADO'
 
         });
 
@@ -138,3 +166,4 @@ router.post('/confirmar', async (req, res) => {
 });
 
 module.exports = router;
+```
