@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 
@@ -66,7 +65,7 @@ border-radius:20px;
 
 <div class="max-w-xl mx-auto">
 
-<!-- LOGIN PERFIL -->
+<!-- SELECCION PERFIL -->
 
 <div
 id="pantallaPerfil"
@@ -85,36 +84,60 @@ X
 
 <h1
 class="text-white text-5xl font-black mt-5 neon">
+
 EXELARIS
+
 </h1>
 
 <p
 class="text-cyan-300 tracking-[6px] mt-2">
+
 CONTROL DE ACCESO
+
 </p>
 
 </div>
 
 <div class="mt-8 space-y-4">
 
-<button onclick="seleccionarPerfil('Administrador')" class="w-full p-5 rounded-2xl bg-white font-bold">
+<button
+onclick="seleccionarPerfil('Administrador')"
+class="w-full p-5 rounded-2xl bg-white font-bold">
+
 Administrador
+
 </button>
 
-<button onclick="seleccionarPerfil('Operador')" class="w-full p-5 rounded-2xl bg-white font-bold">
+<button
+onclick="seleccionarPerfil('Operador')"
+class="w-full p-5 rounded-2xl bg-white font-bold">
+
 Operador
+
 </button>
 
-<button onclick="seleccionarPerfil('Validador 1')" class="w-full p-5 rounded-2xl bg-white font-bold">
+<button
+onclick="seleccionarPerfil('Validador 1')"
+class="w-full p-5 rounded-2xl bg-white font-bold">
+
 Validador 1
+
 </button>
 
-<button onclick="seleccionarPerfil('Validador 2')" class="w-full p-5 rounded-2xl bg-white font-bold">
+<button
+onclick="seleccionarPerfil('Validador 2')"
+class="w-full p-5 rounded-2xl bg-white font-bold">
+
 Validador 2
+
 </button>
 
-<button onclick="seleccionarPerfil('Validador 3')" class="w-full p-5 rounded-2xl bg-white font-bold">
+<button
+onclick="seleccionarPerfil('Validador 3')"
+class="w-full p-5 rounded-2xl bg-white font-bold">
+
 Validador 3
+
 </button>
 
 </div>
@@ -143,7 +166,9 @@ class="text-white text-3xl font-black">
 </div>
 
 <div class="mt-6 bg-white rounded-3xl p-2">
+
 <div id="reader"></div>
+
 </div>
 
 <div
@@ -167,6 +192,7 @@ const API =
 let perfilSeleccionado = '';
 let boletoActual = null;
 let html5QrCode = null;
+let scannerActivo = false;
 
 function seleccionarPerfil(perfil){
 
@@ -190,6 +216,12 @@ iniciarScanner();
 
 async function iniciarScanner(){
 
+if(scannerActivo){
+return;
+}
+
+scannerActivo = true;
+
 html5QrCode =
 new Html5Qrcode("reader");
 
@@ -200,21 +232,33 @@ facingMode:"environment"
 },
 
 {
-fps:10,
+fps:15,
 qrbox:250
 },
 
 async(decodedText)=>{
 
+scannerActivo = false;
+
 await html5QrCode.stop();
 
-buscarBoleto(
-decodedText
-);
+buscarBoleto(decodedText);
 
 }
 
 );
+
+}
+
+async function escanearSiguiente(){
+
+document.getElementById(
+'resultado'
+).classList.add('hidden');
+
+boletoActual = null;
+
+await iniciarScanner();
 
 }
 
@@ -257,26 +301,38 @@ if(data.usado){
 
 resultado.innerHTML = `
 
-<div class="bg-red-500 rounded-3xl p-6">
+<div class="bg-red-600 rounded-3xl p-6 text-center">
 
-<h2 class="text-3xl font-black">
-❌ BOLETO UTILIZADO
+<h2 class="text-4xl font-black">
+🚫 BOLETO UTILIZADO
 </h2>
 
 <p class="mt-4">
-<strong>Folio:</strong>
-${data.boleto.folio}
-</p>
-
-<p>
-<strong>Nombre:</strong>
 ${data.boleto.nombre}
 </p>
 
 <p>
-<strong>Validado por:</strong>
+${data.boleto.folio}
+</p>
+
+<p class="mt-2">
+Validado por:
 ${data.boleto.validadoPor || '-'}
 </p>
+
+<button
+onclick="escanearSiguiente()"
+class="
+mt-6
+bg-black
+px-8
+py-4
+rounded-2xl
+font-bold">
+
+ESCANEAR OTRO
+
+</button>
 
 </div>
 
@@ -286,27 +342,35 @@ ${data.boleto.validadoPor || '-'}
 
 resultado.innerHTML = `
 
-<div class="bg-red-500 rounded-3xl p-6">
+<div class="bg-red-600 rounded-3xl p-6 text-center">
 
-<h2 class="text-3xl font-black">
+<h2 class="text-4xl font-black">
 ❌ QR INVÁLIDO
 </h2>
 
-<p class="mt-2">
+<p class="mt-4">
 ${data.error}
 </p>
+
+<button
+onclick="escanearSiguiente()"
+class="
+mt-6
+bg-black
+px-8
+py-4
+rounded-2xl
+font-bold">
+
+ESCANEAR OTRO
+
+</button>
 
 </div>
 
 `;
 
 }
-
-setTimeout(()=>{
-
-location.reload();
-
-},3000);
 
 return;
 
@@ -317,24 +381,21 @@ data.boleto;
 
 resultado.innerHTML = `
 
-<div class="bg-green-500 rounded-3xl p-6">
+<div class="bg-green-600 rounded-3xl p-6 text-center">
 
-<h2 class="text-3xl font-black">
+<h2 class="text-4xl font-black">
 ✅ BOLETO VÁLIDO
 </h2>
 
 <p class="mt-4">
-<strong>Folio:</strong>
+<strong>${boletoActual.nombre}</strong>
+</p>
+
+<p>
 ${boletoActual.folio}
 </p>
 
 <p>
-<strong>Nombre:</strong>
-${boletoActual.nombre}
-</p>
-
-<p>
-<strong>Tipo:</strong>
 ${boletoActual.tipo}
 </p>
 
@@ -342,7 +403,14 @@ ${boletoActual.tipo}
 
 onclick="confirmarAcceso()"
 
-class="mt-6 w-full bg-black text-white p-4 rounded-2xl font-black">
+class="
+mt-6
+w-full
+bg-black
+text-white
+p-4
+rounded-2xl
+font-black">
 
 CONFIRMAR ACCESO
 
@@ -384,34 +452,50 @@ perfilSeleccionado
 const data =
 await respuesta.json();
 
-if(data.success){
+if(!data.success){
+
+alert(data.error);
+
+return;
+
+}
 
 document.getElementById(
 'resultado'
 ).innerHTML = `
 
-<div class="bg-green-600 rounded-3xl p-8 text-center">
+<div class="bg-green-700 rounded-3xl p-8 text-center">
 
-<h2 class="text-4xl font-black">
+<h2 class="text-5xl font-black">
 🎉 ACCESO AUTORIZADO
 </h2>
 
 <p class="mt-4">
 Validado por:
-<strong>${perfilSeleccionado}</strong>
+<strong>
+${perfilSeleccionado}
+</strong>
 </p>
+
+<button
+
+onclick="escanearSiguiente()"
+
+class="
+mt-8
+bg-black
+px-8
+py-4
+rounded-2xl
+font-bold">
+
+ESCANEAR SIGUIENTE
+
+</button>
 
 </div>
 
 `;
-
-setTimeout(()=>{
-
-location.reload();
-
-},2500);
-
-}
 
 }
 
@@ -419,4 +503,3 @@ location.reload();
 
 </body>
 </html>
-```
