@@ -1,4 +1,3 @@
-```javascript
 const express = require('express');
 const db = require('../firebase');
 
