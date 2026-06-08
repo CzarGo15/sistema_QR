@@ -1,4 +1,3 @@
-```javascript
 const express = require('express');
 const db = require('../firebase');
 
@@ -188,4 +187,3 @@ router.post('/confirmar', async (req, res) => {
 });
 
 module.exports = router;
-```
