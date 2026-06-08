@@ -9,10 +9,20 @@ require('./routes/boletos');
 const validarRoutes =
 require('./routes/validar');
 
+const dashboardRoutes =
+require('./routes/dashboard');
+
 const app = express();
 
 app.use(cors());
+
 app.use(express.json());
+
+/*
+==================================
+RUTAS
+==================================
+*/
 
 app.use(
 '/api/boletos',
@@ -24,13 +34,44 @@ app.use(
 validarRoutes
 );
 
+app.use(
+'/api/dashboard',
+dashboardRoutes
+);
+
+/*
+==================================
+HOME
+==================================
+*/
+
+app.get('/', (req, res) => {
+
+    res.json({
+
+        sistema: 'Fiesta Retro',
+
+        estado: 'Activo',
+
+        version: '1.0'
+
+    });
+
+});
+
+/*
+==================================
+SERVER
+==================================
+*/
+
 const PORT =
 process.env.PORT || 3000;
 
 app.listen(PORT, () => {
 
-console.log(
-`Servidor iniciado en puerto ${PORT}`
-);
+    console.log(
+        `Servidor iniciado en puerto ${PORT}`
+    );
 
 });
