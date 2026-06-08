@@ -1,3 +1,4 @@
+```javascript
 const express = require('express');
 const db = require('../firebase');
 
@@ -51,43 +52,30 @@ router.post('/buscar', async (req, res) => {
         console.log('ESTADO:', boleto.estado);
         console.log('UUID:', boleto.uuid);
 
-        const estado =
-            String(
-                boleto.estado || ''
-            )
-            .trim()
-            .toLowerCase();
+        const estado = String(
+            boleto.estado || ''
+        )
+        .trim()
+        .toLowerCase();
 
         if (estado === 'usado') {
 
-            console.log(
-                '🚫 BOLETO YA UTILIZADO'
-            );
+            console.log('🚫 BOLETO YA UTILIZADO');
 
             return res.json({
-
                 success: false,
-
                 usado: true,
-
                 error: 'BOLETO YA UTILIZADO',
-
                 boleto
-
             });
 
         }
 
-        console.log(
-            '✅ BOLETO ACTIVO'
-        );
+        console.log('✅ BOLETO ACTIVO');
 
         return res.json({
-
             success: true,
-
             boleto
-
         });
 
     } catch (error) {
@@ -98,11 +86,8 @@ router.post('/buscar', async (req, res) => {
         );
 
         return res.status(500).json({
-
             success: false,
-
             error: error.message
-
         });
 
     }
@@ -130,34 +115,28 @@ router.post('/confirmar', async (req, res) => {
             uuid
         );
 
-        const ref =
-            db.collection('boletos')
-                .doc(uuid);
+        const ref = db
+            .collection('boletos')
+            .doc(uuid);
 
-        const doc =
-            await ref.get();
+        const doc = await ref.get();
 
         if (!doc.exists) {
 
             return res.json({
-
                 success: false,
-
                 error: 'BOLETO NO ENCONTRADO'
-
             });
 
         }
 
-        const boleto =
-            doc.data();
+        const boleto = doc.data();
 
-        const estado =
-            String(
-                boleto.estado || ''
-            )
-            .trim()
-            .toLowerCase();
+        const estado = String(
+            boleto.estado || ''
+        )
+        .trim()
+        .toLowerCase();
 
         if (estado === 'usado') {
 
@@ -166,11 +145,8 @@ router.post('/confirmar', async (req, res) => {
             );
 
             return res.json({
-
                 success: false,
-
                 error: 'BOLETO YA UTILIZADO'
-
             });
 
         }
@@ -191,11 +167,8 @@ router.post('/confirmar', async (req, res) => {
         );
 
         return res.json({
-
             success: true,
-
             mensaje: 'ACCESO REGISTRADO'
-
         });
 
     } catch (error) {
@@ -206,11 +179,8 @@ router.post('/confirmar', async (req, res) => {
         );
 
         return res.status(500).json({
-
             success: false,
-
             error: error.message
-
         });
 
     }
