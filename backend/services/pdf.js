@@ -1,128 +1,191 @@
+const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
-const puppeteer = require('puppeteer');
 
 async function generarPDF(datos) {
 
-    try {
+    return new Promise((resolve, reject) => {
 
-        const plantillaPath = path.join(
-            __dirname,
-            '../../frontend/boleto.html'
-        );
+        try {
 
-        let html = fs.readFileSync(
-            plantillaPath,
-            'utf8'
-        );
+            const carpetaPDF = path.join(
+                __dirname,
+                '../pdfs'
+            );
 
-        html = html.replaceAll(
-            '{{NOMBRE}}',
-            datos.nombre
-        );
+            if (!fs.existsSync(carpetaPDF)) {
 
-        html = html.replaceAll(
-            '{{CORREO}}',
-            datos.correo
-        );
+                fs.mkdirSync(
+                    carpetaPDF,
+                    {
+                        recursive: true
+                    }
+                );
 
-        html = html.replaceAll(
-            '{{FOLIO}}',
-            datos.folio
-        );
+            }
 
-        html = html.replaceAll(
-            '{{TIPO}}',
-            datos.tipo
-        );
-
-        html = html.replaceAll(
-            '{{UUID}}',
-            datos.uuid
-        );
-
-        html = html.replaceAll(
-            '{{QR}}',
-            datos.qr
-        );
-
-        const carpetaPDF = path.join(
-            __dirname,
-            '../pdfs'
-        );
-
-        if (!fs.existsSync(carpetaPDF)) {
-
-            fs.mkdirSync(
+            const rutaPDF = path.join(
                 carpetaPDF,
+                `boleto-${datos.folio}.pdf`
+            );
+
+            const doc = new PDFDocument({
+
+                size: 'A4',
+
+                margin: 40
+
+            });
+
+            const stream =
+                fs.createWriteStream(
+                    rutaPDF
+                );
+
+            doc.pipe(stream);
+
+            // ENCABEZADO
+
+            doc
+                .fontSize(28)
+                .fillColor('#4f46e5')
+                .text(
+                    'EXELARIS',
+                    {
+                        align: 'center'
+                    }
+                );
+
+            doc
+                .fontSize(20)
+                .fillColor('#111827')
+                .text(
+                    'FIESTA RETRO',
+                    {
+                        align: 'center'
+                    }
+                );
+
+            doc.moveDown();
+
+            // DATOS EVENTO
+
+            doc
+                .fontSize(14)
+                .fillColor('black')
+                .text(
+                    '31 Octubre 2026'
+                );
+
+            doc.text(
+                '20:00 HRS'
+            );
+
+            doc.text(
+                'Salon SUTERM'
+            );
+
+            doc.text(
+                'Coatzacoalcos, Veracruz'
+            );
+
+            doc.moveDown();
+
+            // DATOS BOLETO
+
+            doc
+                .fontSize(18)
+                .fillColor('#4f46e5')
+                .text(
+                    'Datos del Boleto'
+                );
+
+            doc.moveDown(0.5);
+
+            doc
+                .fontSize(12)
+                .fillColor('black');
+
+            doc.text(
+                `Nombre: ${datos.nombre}`
+            );
+
+            doc.text(
+                `Correo: ${datos.correo}`
+            );
+
+            doc.text(
+                `Folio: ${datos.folio}`
+            );
+
+            doc.text(
+                `Tipo: ${datos.tipo}`
+            );
+
+            doc.text(
+                `UUID: ${datos.uuid}`
+            );
+
+            doc.moveDown();
+
+            // QR
+
+            const qrBase64 =
+                datos.qr.replace(
+                    /^data:image\/png;base64,/,
+                    ''
+                );
+
+            const qrBuffer =
+                Buffer.from(
+                    qrBase64,
+                    'base64'
+                );
+
+            doc.image(
+                qrBuffer,
                 {
-                    recursive: true
+                    fit: [220, 220],
+                    align: 'center'
                 }
             );
 
-        }
+            doc.moveDown();
 
-        const nombreArchivo =
-            `boleto-${datos.folio}.pdf`;
+            doc
+                .fontSize(10)
+                .fillColor('gray')
+                .text(
+                    'Presenta este QR al ingresar al evento.',
+                    {
+                        align: 'center'
+                    }
+                );
 
-        const rutaPDF =
-            path.join(
-                carpetaPDF,
-                nombreArchivo
+            doc.end();
+
+            stream.on(
+                'finish',
+                () => {
+
+                    console.log(
+                        `PDF generado: ${rutaPDF}`
+                    );
+
+                    resolve(
+                        rutaPDF
+                    );
+
+                }
             );
 
-        const browser =
-            await puppeteer.launch({
-                headless: true
-            });
+        } catch (error) {
 
-        const page =
-            await browser.newPage();
+            reject(error);
 
-        await page.setContent(
-            html,
-            {
-                waitUntil: 'networkidle0'
-            }
-        );
+        }
 
-        await page.pdf({
-
-            path: rutaPDF,
-
-            format: 'A4',
-
-            printBackground: true,
-
-            margin: {
-
-                top: '10mm',
-                right: '10mm',
-                bottom: '10mm',
-                left: '10mm'
-
-            }
-
-        });
-
-        await browser.close();
-
-        console.log(
-            `PDF generado: ${rutaPDF}`
-        );
-
-        return rutaPDF;
-
-    } catch (error) {
-
-        console.error(
-            'Error generando PDF:',
-            error
-        );
-
-        throw error;
-
-    }
+    });
 
 }
 
