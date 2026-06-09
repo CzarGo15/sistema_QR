@@ -1,116 +1,90 @@
-const nodemailer = require('nodemailer');
+const fs = require('fs');
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-
-    host: 'smtp.gmail.com',
-
-    port: 465,
-
-    secure: true,
-
-    auth: {
-
-        user: process.env.GMAIL_USER,
-
-        pass: process.env.GMAIL_PASS
-
-    }
-
-});
+const resend = new Resend(
+    process.env.RESEND_API_KEY
+);
 
 async function enviarBoleto(datos) {
 
     try {
 
-        console.log('====================');
-        console.log(
-            'GMAIL_USER:',
-            process.env.GMAIL_USER
-        );
+        const pdfBuffer =
+            fs.readFileSync(
+                datos.pdf
+            );
+
+        const resultado =
+            await resend.emails.send({
+
+                from:
+                    'Fiesta Retro <onboarding@resend.dev>',
+
+                to: [
+                    datos.correo
+                ],
+
+                subject:
+                    '🎉 Tus boletos para Fiesta Retro',
+
+                html: `
+                <div style="
+                    font-family:Arial;
+                    max-width:600px;
+                    margin:auto;
+                ">
+
+                    <h2>
+                        🎉 Gracias por tu compra
+                    </h2>
+
+                    <p>
+                        Hola
+                        <strong>${datos.nombre}</strong>
+                    </p>
+
+                    <p>
+                        Adjuntamos tu boleto digital.
+                    </p>
+
+                    <p>
+                        <strong>Folio:</strong>
+                        ${datos.folio}
+                    </p>
+
+                    <p>
+                        <strong>Tipo:</strong>
+                        ${datos.tipo}
+                    </p>
+
+                    <p>
+                        Presenta el PDF adjunto al ingresar.
+                    </p>
+
+                </div>
+                `,
+
+                attachments: [
+
+                    {
+
+                        filename:
+                            `boleto-${datos.folio}.pdf`,
+
+                        content:
+                            pdfBuffer.toString('base64')
+
+                    }
+
+                ]
+
+            });
 
         console.log(
-            'GMAIL_PASS:',
-            process.env.GMAIL_PASS
-                ? 'CONFIGURADA'
-                : 'NO CONFIGURADA'
-        );
-        console.log('====================');
-
-        await transporter.verify();
-
-        console.log(
-            '✅ SMTP Gmail conectado correctamente'
+            '📧 CORREO ENVIADO'
         );
 
-        await transporter.sendMail({
-
-            from: `"Fiesta Retro" <${process.env.GMAIL_USER}>`,
-
-            to: datos.correo,
-
-            cc: process.env.GMAIL_USER,
-
-            subject: '🎉 Tus boletos para Fiesta Retro',
-
-            html: `
-
-            <div style="font-family:Arial,sans-serif">
-
-                <h2>
-                    🎉 Gracias por tu compra
-                </h2>
-
-                <p>
-                    Hola
-                    <strong>${datos.nombre}</strong>,
-                </p>
-
-                <p>
-                    Adjuntamos tu boleto digital para
-                    <strong>Fiesta Retro</strong>.
-                </p>
-
-                <p>
-                    <strong>Folio:</strong>
-                    ${datos.folio}
-                </p>
-
-                <p>
-                    <strong>Tipo:</strong>
-                    ${datos.tipo}
-                </p>
-
-                <p>
-                    Presenta el código QR al ingresar
-                    al evento.
-                </p>
-
-                <p>
-                    ¡Nos vemos en la pista! 🕺💃
-                </p>
-
-            </div>
-
-            `,
-
-            attachments: [
-
-                {
-
-                    filename:
-                        `boleto-${datos.folio}.pdf`,
-
-                    path: datos.pdf
-
-                }
-
-            ]
-
-        });
-
-        console.log(
-            `📧 Correo enviado a ${datos.correo}`
-        );
+        console.log(resultado);
 
         return true;
 
@@ -121,7 +95,7 @@ async function enviarBoleto(datos) {
             error
         );
 
-        throw error;
+        return false;
 
     }
 
