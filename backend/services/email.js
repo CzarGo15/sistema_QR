@@ -2,7 +2,11 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
 
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+
+    port: 465,
+
+    secure: true,
 
     auth: {
 
@@ -16,56 +20,110 @@ const transporter = nodemailer.createTransport({
 
 async function enviarBoleto(datos) {
 
-    await transporter.sendMail({
+    try {
 
-        from: `"Fiesta Retro" <${process.env.GMAIL_USER}>`,
+        console.log('====================');
+        console.log(
+            'GMAIL_USER:',
+            process.env.GMAIL_USER
+        );
 
-        to: datos.correo,
+        console.log(
+            'GMAIL_PASS:',
+            process.env.GMAIL_PASS
+                ? 'CONFIGURADA'
+                : 'NO CONFIGURADA'
+        );
+        console.log('====================');
 
-        cc: process.env.GMAIL_USER,
+        await transporter.verify();
 
-        subject: '🎉 Tus boletos para Fiesta Retro',
+        console.log(
+            '✅ SMTP Gmail conectado correctamente'
+        );
 
-        html: `
-        <div style="font-family:Arial,sans-serif">
+        await transporter.sendMail({
 
-            <h2>🎉 Gracias por tu compra</h2>
+            from: `"Fiesta Retro" <${process.env.GMAIL_USER}>`,
 
-            <p>Hola <strong>${datos.nombre}</strong>,</p>
+            to: datos.correo,
 
-            <p>
-                Adjuntamos tu boleto digital para
-                <strong>Fiesta Retro</strong>.
-            </p>
+            cc: process.env.GMAIL_USER,
 
-            <p>
-                <strong>Folio:</strong> ${datos.folio}
-            </p>
+            subject: '🎉 Tus boletos para Fiesta Retro',
 
-            <p>
-                <strong>Tipo:</strong> ${datos.tipo}
-            </p>
+            html: `
 
-            <p>
-                Presenta el código QR al ingresar
-                al evento.
-            </p>
+            <div style="font-family:Arial,sans-serif">
 
-            <p>
-                ¡Nos vemos en la pista! 🕺💃
-            </p>
+                <h2>
+                    🎉 Gracias por tu compra
+                </h2>
 
-        </div>
-        `,
+                <p>
+                    Hola
+                    <strong>${datos.nombre}</strong>,
+                </p>
 
-        attachments: [
-            {
-                filename: `boleto-${datos.folio}.pdf`,
-                path: datos.pdf
-            }
-        ]
+                <p>
+                    Adjuntamos tu boleto digital para
+                    <strong>Fiesta Retro</strong>.
+                </p>
 
-    });
+                <p>
+                    <strong>Folio:</strong>
+                    ${datos.folio}
+                </p>
+
+                <p>
+                    <strong>Tipo:</strong>
+                    ${datos.tipo}
+                </p>
+
+                <p>
+                    Presenta el código QR al ingresar
+                    al evento.
+                </p>
+
+                <p>
+                    ¡Nos vemos en la pista! 🕺💃
+                </p>
+
+            </div>
+
+            `,
+
+            attachments: [
+
+                {
+
+                    filename:
+                        `boleto-${datos.folio}.pdf`,
+
+                    path: datos.pdf
+
+                }
+
+            ]
+
+        });
+
+        console.log(
+            `📧 Correo enviado a ${datos.correo}`
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            '❌ ERROR EMAIL:',
+            error
+        );
+
+        throw error;
+
+    }
 
 }
 
