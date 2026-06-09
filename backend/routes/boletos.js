@@ -11,166 +11,168 @@ const router = express.Router();
 
 router.post('/comprar', async (req, res) => {
 
-    try {
+try {
 
-        console.log('POST /comprar ejecutado');
+    console.log('POST /comprar ejecutado');
 
-        const {
+    const {
+        nombre,
+        correo,
+        telefono,
+        tipo,
+        cantidad
+    } = req.body;
+
+    if (!nombre || !correo) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            error: 'Nombre y correo son obligatorios'
+
+        });
+
+    }
+
+    const boletos = [];
+
+    const contadorRef =
+        db.collection('config')
+            .doc('contadorBoletos');
+
+    for (let i = 0; i < cantidad; i++) {
+
+        // ==========================
+        // FOLIO CONSECUTIVO
+        // ==========================
+
+        const folio = await db.runTransaction(
+            async (transaction) => {
+
+                const doc =
+                    await transaction.get(contadorRef);
+
+                let ultimoFolio = 0;
+
+                if (doc.exists) {
+
+                    ultimoFolio =
+                        doc.data().ultimoFolio || 0;
+
+                }
+
+                const nuevoFolio =
+                    ultimoFolio + 1;
+
+                transaction.set(
+                    contadorRef,
+                    {
+                        ultimoFolio: nuevoFolio
+                    }
+                );
+
+                return `EXL-${String(nuevoFolio)
+                    .padStart(6, '0')}`;
+
+            }
+        );
+
+        // ==========================
+        // UUID ÚNICO
+        // ==========================
+
+        let uuid;
+        let existeUUID = true;
+
+        while (existeUUID) {
+
+            uuid = `EXL-${nanoid(12)}`;
+
+            const existe =
+                await db
+                    .collection('boletos')
+                    .doc(uuid)
+                    .get();
+
+            existeUUID = existe.exists;
+
+        }
+
+        // ==========================
+        // PRECIO
+        // ==========================
+
+        const precio =
+            tipo === 'VIP'
+                ? 350
+                : 250;
+
+        // ==========================
+        // QR
+        // ==========================
+
+        const qr =
+            await generarQR(uuid);
+
+        // ==========================
+        // OBJETO BOLETO
+        // ==========================
+
+        const boleto = {
+
+            uuid,
+            folio,
             nombre,
             correo,
             telefono,
             tipo,
-            cantidad
-        } = req.body;
+            precio,
 
-        if (!nombre || !correo) {
+            estado: 'activo',
 
-            return res.status(400).json({
+            fechaCompra: new Date()
 
-                success: false,
+        };
 
-                error: 'Nombre y correo son obligatorios'
+        // ==========================
+        // GUARDAR FIREBASE
+        // ==========================
+
+        await db
+            .collection('boletos')
+            .doc(uuid)
+            .set(boleto);
+
+        console.log(
+            `✅ Guardado ${folio}`
+        );
+
+        // ==========================
+        // GENERAR PDF
+        // ==========================
+
+        const rutaPDF =
+            await generarPDF({
+
+                nombre,
+                correo,
+                folio,
+                tipo,
+                uuid,
+                qr
 
             });
 
-        }
+        console.log(
+            `📄 PDF generado ${folio}`
+        );
 
-        const boletos = [];
+        // ==========================
+        // ENVIAR CORREO
+        // ==========================
 
-        const contadorRef =
-            db.collection('config')
-                .doc('contadorBoletos');
-
-        for (let i = 0; i < cantidad; i++) {
-
-            // ==========================
-            // FOLIO CONSECUTIVO
-            // ==========================
-
-            const folio = await db.runTransaction(
-                async (transaction) => {
-
-                    const doc =
-                        await transaction.get(contadorRef);
-
-                    let ultimoFolio = 0;
-
-                    if (doc.exists) {
-
-                        ultimoFolio =
-                            doc.data().ultimoFolio || 0;
-
-                    }
-
-                    const nuevoFolio =
-                        ultimoFolio + 1;
-
-                    transaction.set(
-                        contadorRef,
-                        {
-                            ultimoFolio: nuevoFolio
-                        }
-                    );
-
-                    return `EXL-${String(nuevoFolio)
-                        .padStart(6, '0')}`;
-
-                }
-            );
-
-            // ==========================
-            // UUID ÚNICO
-            // ==========================
-
-            let uuid;
-            let existeUUID = true;
-
-            while (existeUUID) {
-
-                uuid = `EXL-${nanoid(12)}`;
-
-                const existe =
-                    await db
-                        .collection('boletos')
-                        .doc(uuid)
-                        .get();
-
-                existeUUID = existe.exists;
-
-            }
-
-            // ==========================
-            // PRECIO
-            // ==========================
-
-            const precio =
-                tipo === 'VIP'
-                    ? 350
-                    : 250;
-
-            // ==========================
-            // QR
-            // ==========================
-
-            const qr =
-                await generarQR(uuid);
-
-            // ==========================
-            // OBJETO BOLETO
-            // ==========================
-
-            const boleto = {
-
-                uuid,
-                folio,
-                nombre,
-                correo,
-                telefono,
-                tipo,
-                precio,
-
-                estado: 'activo',
-
-                fechaCompra: new Date()
-
-            };
-
-            // ==========================
-            // FIRESTORE
-            // ==========================
-
-            await db
-                .collection('boletos')
-                .doc(uuid)
-                .set(boleto);
-
-            console.log(
-                `✅ Guardado ${folio}`
-            );
-
-            // ==========================
-            // PDF
-            // ==========================
-
-            const rutaPDF =
-                await generarPDF({
-
-                    nombre,
-                    correo,
-                    folio,
-                    tipo,
-                    uuid,
-                    qr
-
-                });
-
-            console.log(
-                `📄 PDF generado ${folio}`
-            );
-
-            // ==========================
-            // CORREO
-            // ==========================
+        try {
 
             await enviarBoleto({
 
@@ -186,39 +188,48 @@ router.post('/comprar', async (req, res) => {
                 `📧 Correo enviado ${correo}`
             );
 
-            boletos.push({
+        } catch (emailError) {
 
-                ...boleto,
-
-                pdf: rutaPDF
-
-            });
+            console.error(
+                '❌ ERROR EMAIL:',
+                emailError.message
+            );
 
         }
 
-        return res.json({
+        boletos.push({
 
-            success: true,
+            ...boleto,
 
-            total: boletos.length,
-
-            boletos
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        return res.status(500).json({
-
-            success: false,
-
-            error: error.message
+            pdf: rutaPDF
 
         });
 
     }
+
+    return res.json({
+
+        success: true,
+
+        total: boletos.length,
+
+        boletos
+
+    });
+
+} catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+
+        success: false,
+
+        error: error.message
+
+    });
+
+}
 
 });
 
