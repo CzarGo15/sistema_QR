@@ -8,20 +8,11 @@ const generarPDF = require('../services/pdf');
 
 const router = express.Router();
 
-# /*
-
-COMPRAR BOLETOS
-POST /api/boletos/comprar
-=========================
-
-*/
-
 router.post('/comprar', async (req, res) => {
 
+    try {
 
-try {
-
-    console.log('POST /comprar ejecutado');
+        console.log('POST /comprar ejecutado');
 
     const {
         nombre,
@@ -51,9 +42,7 @@ try {
 
     for (let i = 0; i < cantidad; i++) {
 
-        // ==========================
-        // FOLIO CONSECUTIVO
-        // ==========================
+      
 
         const folio = await db.runTransaction(
             async (transaction) => {
@@ -89,9 +78,7 @@ try {
             }
         );
 
-        // ==========================
-        // UUID ÚNICO
-        // ==========================
+        
 
         let uuid;
         let existeUUID = true;
@@ -111,26 +98,18 @@ try {
 
         }
 
-        // ==========================
-        // PRECIO
-        // ==========================
-
+        
         const precio =
             tipo === 'VIP'
                 ? 350
                 : 250;
 
-        // ==========================
-        // QR
-        // ==========================
+     
 
         const qr =
             await generarQR(uuid);
 
-        // ==========================
-        // OBJETO BOLETO
-        // ==========================
-
+     
         const boleto = {
 
             uuid,
@@ -147,10 +126,7 @@ try {
 
         };
 
-        // ==========================
-        // GUARDAR FIRESTORE
-        // ==========================
-
+       
         await db
             .collection('boletos')
             .doc(uuid)
@@ -160,9 +136,7 @@ try {
             `✅ Guardado ${folio}`
         );
 
-        // ==========================
-        // GENERAR PDF
-        // ==========================
+        
 
         const rutaPDF =
             await generarPDF({
