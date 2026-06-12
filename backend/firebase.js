@@ -6,14 +6,13 @@ process.env.FIREBASE_SERVICE_ACCOUNT
 
 admin.initializeApp({
 
-```
 credential: admin.credential.cert(
     serviceAccount
 ),
 
 storageBucket:
     'sistemaqr-a4d32.firebasestorage.app'
-```
+
 
 });
 
