@@ -1,13 +1,14 @@
 const fs = require('fs');
-const { Resend } = require('resend');
-
-const resend = new Resend(
-    process.env.RESEND_API_KEY
-);
 
 async function enviarBoleto(datos) {
 
     try {
+
+        const { Resend } = await import('resend');
+
+        const resend = new Resend(
+            process.env.RESEND_API_KEY
+        );
 
         const pdfBuffer =
             fs.readFileSync(datos.pdf);
@@ -31,10 +32,7 @@ async function enviarBoleto(datos) {
                     max-width:600px;
                     margin:auto;
                 ">
-
-                    <h2>
-                        🎉 Gracias por tu compra
-                    </h2>
+                    <h2>🎉 Gracias por tu compra</h2>
 
                     <p>
                         Hola <strong>${datos.nombre}</strong>
@@ -58,7 +56,6 @@ async function enviarBoleto(datos) {
                         Presenta este boleto al ingresar
                         al evento.
                     </p>
-
                 </div>
                 `,
 
@@ -74,10 +71,7 @@ async function enviarBoleto(datos) {
 
             });
 
-        console.log(
-            '📧 CORREO ENVIADO'
-        );
-
+        console.log('📧 CORREO ENVIADO');
         console.log(respuesta);
 
         return true;
