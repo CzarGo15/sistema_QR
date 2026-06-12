@@ -1,15 +1,38 @@
 const admin = require('firebase-admin');
 
 const serviceAccount = JSON.parse(
-    process.env.FIREBASE_SERVICE_ACCOUNT
+process.env.FIREBASE_SERVICE_ACCOUNT
 );
 
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+
+```
+credential:
+    admin.credential.cert(
+        serviceAccount
+    ),
+
+storageBucket:
+    'sistemaqr-a4d32.firebasestorage.app'
+```
+
 });
 
-const db = admin.firestore();
+const db =
+admin.firestore();
 
-console.log('✅ Firebase conectado correctamente');
+const bucket =
+admin.storage().bucket();
 
-module.exports = db;
+console.log(
+'✅ Firebase conectado correctamente'
+);
+
+module.exports = {
+
+```
+db,
+bucket
+```
+
+};
