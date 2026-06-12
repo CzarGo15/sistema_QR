@@ -7,7 +7,7 @@ const serviceAccount = JSON.parse(
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
-@@ -10,4 +12,4 @@ const db = admin.firestore();
+
 
 console.log('✅ Firebase conectado correctamente');
 
