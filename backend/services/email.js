@@ -10,11 +10,9 @@ async function enviarBoleto(datos) {
     try {
 
         const pdfBuffer =
-            fs.readFileSync(
-                datos.pdf
-            );
+            fs.readFileSync(datos.pdf);
 
-        const resultado =
+        const respuesta =
             await resend.emails.send({
 
                 from:
@@ -29,7 +27,7 @@ async function enviarBoleto(datos) {
 
                 html: `
                 <div style="
-                    font-family:Arial;
+                    font-family:Arial,sans-serif;
                     max-width:600px;
                     margin:auto;
                 ">
@@ -58,7 +56,7 @@ async function enviarBoleto(datos) {
                     </p>
 
                     <p>
-                        Presenta el PDF adjunto al ingresar.
+                        Presenta este boleto al ingresar.
                     </p>
 
                 </div>
@@ -84,18 +82,18 @@ async function enviarBoleto(datos) {
             '📧 CORREO ENVIADO'
         );
 
-        console.log(resultado);
+        console.log(respuesta);
 
         return true;
 
     } catch (error) {
 
         console.error(
-            '❌ ERROR EMAIL:',
+            '❌ ERROR RESEND:',
             error
         );
 
-        return false;
+        throw error;
 
     }
 
