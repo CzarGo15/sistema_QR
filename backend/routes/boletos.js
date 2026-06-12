@@ -8,9 +8,17 @@ const generarPDF = require('../services/pdf');
 
 const router = express.Router();
 
+# /*
+
+COMPRAR BOLETOS
+POST /api/boletos/comprar
+=========================
+
+*/
+
 router.post('/comprar', async (req, res) => {
 
-```
+
 try {
 
     console.log('POST /comprar ejecutado');
@@ -72,8 +80,11 @@ try {
                     }
                 );
 
-                return `EXL-${String(nuevoFolio)
-                    .padStart(6, '0')}`;
+                const folioTexto =
+                    String(nuevoFolio)
+                        .padStart(6, '0');
+
+                return 'EXL-' + folioTexto;
 
             }
         );
@@ -87,7 +98,7 @@ try {
 
         while (existeUUID) {
 
-            uuid = `EXL-${nanoid(12)}`;
+            uuid = 'EXL-' + nanoid(12);
 
             const existe =
                 await db
@@ -95,7 +106,8 @@ try {
                     .doc(uuid)
                     .get();
 
-            existeUUID = existe.exists;
+            existeUUID =
+                existe.exists;
 
         }
 
@@ -136,7 +148,7 @@ try {
         };
 
         // ==========================
-        // GUARDAR FIREBASE
+        // GUARDAR FIRESTORE
         // ==========================
 
         await db
@@ -166,14 +178,6 @@ try {
 
         console.log(
             `📄 PDF generado ${folio}`
-        );
-
-        // ==========================
-        // SIN CORREO POR AHORA
-        // ==========================
-
-        console.log(
-            `📄 Boleto listo ${folio}`
         );
 
         boletos.push({
@@ -209,7 +213,7 @@ try {
     });
 
 }
-```
+
 
 });
 
