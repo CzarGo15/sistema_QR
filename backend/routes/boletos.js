@@ -3,6 +3,12 @@ const { nanoid } = require('nanoid');
 
 const db = require('../firebase');
 
+console.log('====================');
+console.log('DB:', db);
+console.log('TIPO DB:', typeof db);
+console.log('COLLECTION:', typeof db.collection);
+console.log('====================');
+
 const generarQR = require('../services/qr');
 const generarPDF = require('../services/pdf');
 
