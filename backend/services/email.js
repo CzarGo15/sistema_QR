@@ -12,36 +12,54 @@ async function enviarBoleto(datos) {
         const pdfBuffer =
             fs.readFileSync(datos.pdf);
 
-        const resultado =
+        const respuesta =
             await resend.emails.send({
 
                 from:
                     'Fiesta Retro <onboarding@resend.dev>',
 
-                to:
-                    datos.correo,
+                to: [
+                    datos.correo
+                ],
 
                 subject:
                     '🎉 Tus boletos para Fiesta Retro',
 
                 html: `
-                <h2>Gracias por tu compra</h2>
+                <div style="
+                    font-family:Arial,sans-serif;
+                    max-width:600px;
+                    margin:auto;
+                ">
 
-                <p>
-                    Hola ${datos.nombre}
-                </p>
+                    <h2>
+                        🎉 Gracias por tu compra
+                    </h2>
 
-                <p>
-                    Folio: ${datos.folio}
-                </p>
+                    <p>
+                        Hola <strong>${datos.nombre}</strong>
+                    </p>
 
-                <p>
-                    Tipo: ${datos.tipo}
-                </p>
+                    <p>
+                        Adjuntamos tu boleto digital.
+                    </p>
 
-                <p>
-                    Tu boleto se encuentra adjunto.
-                </p>
+                    <p>
+                        <strong>Folio:</strong>
+                        ${datos.folio}
+                    </p>
+
+                    <p>
+                        <strong>Tipo:</strong>
+                        ${datos.tipo}
+                    </p>
+
+                    <p>
+                        Presenta este boleto al ingresar
+                        al evento.
+                    </p>
+
+                </div>
                 `,
 
                 attachments: [
@@ -60,7 +78,7 @@ async function enviarBoleto(datos) {
             '📧 CORREO ENVIADO'
         );
 
-        console.log(resultado);
+        console.log(respuesta);
 
         return true;
 
