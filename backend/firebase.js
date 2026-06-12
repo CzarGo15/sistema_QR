@@ -7,10 +7,9 @@ process.env.FIREBASE_SERVICE_ACCOUNT
 admin.initializeApp({
 
 ```
-credential:
-    admin.credential.cert(
-        serviceAccount
-    ),
+credential: admin.credential.cert(
+    serviceAccount
+),
 
 storageBucket:
     'sistemaqr-a4d32.firebasestorage.app'
@@ -18,8 +17,7 @@ storageBucket:
 
 });
 
-const db =
-admin.firestore();
+const db = admin.firestore();
 
 const bucket =
 admin.storage().bucket();
@@ -29,10 +27,6 @@ console.log(
 );
 
 module.exports = {
-
-```
 db,
 bucket
-```
-
 };
