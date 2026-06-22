@@ -362,10 +362,9 @@ GENERAR BOLETOS
 
 <!-- ==========================================
      PLANTILLA OCULTA PARA EL PDF 
-     Basada en tu archivo boleto.html
      ========================================== -->
-<div style="position: absolute; top: -10000px; left: -10000px; width: 384px; padding: 20px; background-color: #e2e8f0;" id="impresion-container">
-    <div id="ticket-template" class="ticket-card bg-white w-full rounded-3xl overflow-hidden">
+<div style="position: absolute; top: -10000px; left: -10000px; width: 384px; background-color: white;" id="impresion-container">
+    <div id="ticket-template" class="ticket-card bg-white w-full overflow-hidden" style="border-radius: 20px;">
         
         <!-- FLYER -->
         <div class="h-64 w-full bg-cover bg-center relative" style="background-image:url('https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200');">
@@ -451,10 +450,10 @@ document.getElementById("generalCard").onclick = ()=>{
 
 actualizar();
 
-// Función que genera y descarga localmente el PDF usando html2pdf
+// Función que genera y descarga localmente el PDF con tamaño ajustado
 async function generarPDFLocal(boleto) {
     return new Promise((resolve) => {
-        // Llenar datos en la plantilla
+        // Llenar datos
         document.getElementById('ticket-tipo').innerText = "70's • 80's • 90's • " + boleto.tipo;
         document.getElementById('ticket-nombre').innerText = boleto.nombre;
         document.getElementById('ticket-correo').innerText = boleto.correo;
@@ -463,25 +462,31 @@ async function generarPDFLocal(boleto) {
         
         const qrImg = document.getElementById('ticket-qr');
         
-        // Cuando el QR termine de cargar, tomamos la foto del div
         qrImg.onload = () => {
             const template = document.getElementById('ticket-template');
             
+            // Calculamos el tamaño en pixeles del boleto
+            const widthPx = template.offsetWidth;
+            const heightPx = template.offsetHeight;
+
+            // Convertimos pixeles a pulgadas (aprox 96 dpi) para decirle a jsPDF el tamaño exacto de la página
+            const widthIn = widthPx / 96;
+            const heightIn = heightPx / 96;
+
             const opt = {
                 margin:       0,
                 filename:     `Boleto_Exelaris_${boleto.folio}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true }, // useCORS es clave para las imágenes externas
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                html2canvas:  { scale: 2, useCORS: true },
+                // Configuración dinámica del tamaño de página
+                jsPDF:        { unit: 'in', format: [widthIn, heightIn], orientation: 'portrait' }
             };
             
-            // Generar y forzar descarga
             html2pdf().set(opt).from(template).save().then(() => {
                 resolve();
             });
         };
         
-        // Generar el QR usando una API pública rápida (sin problemas de CORS)
         qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + boleto.uuid;
     });
 }
@@ -504,7 +509,6 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
         boton.disabled = true;
         boton.innerHTML = "⏳ Generando boletos...";
 
-        // 1. Enviamos los datos a tu backend real
         const respuesta = await fetch(
             "https://fiestaretro-api.onrender.com/api/boletos/comprar",
             {
@@ -523,13 +527,10 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
         );
 
         const data = await respuesta.json();
-        console.log("RESPUESTA API:", data);
 
         if(data.success){
 
-            // 2. Generamos y descargamos localmente los PDFs usando el diseño de boleto.html
             if(data.boletos && data.boletos.length > 0) {
-                // Usamos un bucle for-of para esperar que se genere cada uno antes del siguiente
                 for (const boleto of data.boletos) {
                     await generarPDFLocal(boleto);
                 }
@@ -537,7 +538,6 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
 
             alert(`✅ ${data.total} boleto(s) generado(s).\n\nEl diseño visual de tu boleto se ha descargado en tu dispositivo.`);
 
-            // Limpiamos los campos
             document.getElementById("nombre").value = "";
             document.getElementById("correo").value = "";
             document.getElementById("telefono").value = "";
