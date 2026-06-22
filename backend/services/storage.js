@@ -32,16 +32,24 @@ async function subirPDF(rutaPDF, folio) {
         const file =
             bucket.file(nombreArchivo);
 
-        await file.makePublic();
+        const [urlFirmada] =
+            await file.getSignedUrl({
 
-        const urlPublica =
-            `https://storage.googleapis.com/${bucket.name}/${nombreArchivo}`;
+                action: 'read',
+
+                expires: '01-01-2035'
+
+            });
 
         console.log(
-            `☁️ PDF subido correctamente: ${urlPublica}`
+            '☁️ PDF subido correctamente:'
         );
 
-        return urlPublica;
+        console.log(
+            urlFirmada
+        );
+
+        return urlFirmada;
 
     } catch (error) {
 
