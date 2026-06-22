@@ -114,7 +114,8 @@ EVENTOS
 <div class="relative h-full min-h-[650px]">
 
 <img
-src="https://scontent.fmtt1-1.fna.fbcdn.net/v/t39.30808-6/710575183_927048340385889_4163472683980830342_n.jpg?stp=dst-jpg_tt6&cstp=mx1350x1950&ctp=p526x296&_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_ohc=T7wIBOpUPE0Q7kNvwEFquXb&_nc_oc=Adq3cxC1dE7lx5jkhO9yq5SY-htfAEJytHEn7lnV8TShfla58-QYgLXSFxO4GklZ7_U&_nc_zt=23&_nc_ht=scontent.fmtt1-1.fna&_nc_gid=q5SMky1Zm28Uf5QPcd4bDw&_nc_ss=7b2a8&oh=00_Af_BGp7jY2QylbHful5T4OHtLbcf4afVSkCAuRnAMpBRhg&oe=6A2CBC50">
+src="https://scontent.fmtt1-1.fna.fbcdn.net/v/t39.30808-6/710575183_927048340385889_4163472683980830342_n.jpg?stp=dst-jpg_tt6&cstp=mx1350x1950&ctp=p526x296&_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_ohc=T7wIBOpUPE0Q7kNvwEFquXb&_nc_oc=Adq3cxC1dE7lx5jkhO9yq5SY-htfAEJytHEn7lnV8TShfla58-QYgLXSFxO4GklZ7_U&_nc_zt=23&_nc_ht=scontent.fmtt1-1.fna&_nc_gid=q5SMky1Zm28Uf5QPcd4bDw&_nc_ss=7b2a8&oh=00_Af_BGp7jY2QylbHful5T4OHtLbcf4afVSkCAuRnAMpBRhg&oe=6A2CBC50"
+alt="Flyer Fiesta Retro" class="w-full h-full object-cover">
 
 <div class="absolute inset-0 flyer-gradient"></div>
 
@@ -384,137 +385,99 @@ document
 .getElementById("btnComprar")
 .addEventListener("click", async () => {
 
-    const boton =
-    document.getElementById(
-        "btnComprar"
-    );
-
-    const nombre =
-    document.getElementById(
-        "nombre"
-    ).value.trim();
-
-    const correo =
-    document.getElementById(
-        "correo"
-    ).value.trim();
-
-    const telefono =
-    document.getElementById(
-        "telefono"
-    ).value.trim();
-
-    const cantidad =
-    parseInt(
-        document.getElementById(
-            "cantidad"
-        ).value
-    );
+    const boton = document.getElementById("btnComprar");
+    const nombre = document.getElementById("nombre").value.trim();
+    const correo = document.getElementById("correo").value.trim();
+    const telefono = document.getElementById("telefono").value.trim();
+    const cantidad = parseInt(document.getElementById("cantidad").value);
 
     if(!nombre || !correo){
-
-        alert(
-            "Completa nombre y correo"
-        );
-
+        alert("Completa nombre y correo");
         return;
-
     }
 
     try{
 
         boton.disabled = true;
+        boton.innerHTML = "⏳ Generando boletos...";
 
-        boton.innerHTML =
-        "⏳ Generando boletos...";
-
-        const respuesta =
-        await fetch(
-
+        const respuesta = await fetch(
             "https://fiestaretro-api.onrender.com/api/boletos/comprar",
-
             {
                 method:"POST",
-
                 headers:{
-                    "Content-Type":
-                    "application/json"
+                    "Content-Type": "application/json"
                 },
-
                 body:JSON.stringify({
-
                     nombre,
                     correo,
                     telefono,
                     tipo,
                     cantidad
-
                 })
-
             }
-
         );
 
-        const data =
-        await respuesta.json();
-
-        console.log(
-            "RESPUESTA API:",
-            data
-        );
+        const data = await respuesta.json();
+        console.log("RESPUESTA API:", data);
 
         if(data.success){
 
+            // 👇 DESCARGAR EL PDF AUTOMÁTICAMENTE AL DISPOSITIVO 👇
+            if(data.boletos && data.boletos.length > 0) {
+                data.boletos.forEach((boleto, index) => {
+                    if (boleto.pdfUrl) {
+                        setTimeout(async () => {
+                            try {
+                                // 1. Descargamos el PDF a la memoria del navegador (Blob)
+                                const respuestaPdf = await fetch(boleto.pdfUrl);
+                                const blob = await respuestaPdf.blob();
+                                
+                                // 2. Creamos una URL local temporal para ese archivo
+                                const urlLocal = window.URL.createObjectURL(blob);
+                                
+                                // 3. Creamos un enlace invisible y forzamos el clic
+                                const enlaceDescarga = document.createElement('a');
+                                enlaceDescarga.style.display = 'none';
+                                enlaceDescarga.href = urlLocal;
+                                enlaceDescarga.download = `Boleto_Exelaris_${boleto.folio}.pdf`;
+                                
+                                document.body.appendChild(enlaceDescarga);
+                                enlaceDescarga.click();
+                                
+                                // 4. Limpiamos la memoria
+                                window.URL.revokeObjectURL(urlLocal);
+                                document.body.removeChild(enlaceDescarga);
+                            } catch (error) {
+                                console.error("Fallo la descarga silenciosa, abriendo en pestaña:", error);
+                                // Respaldo: Si el navegador bloquea la descarga por CORS o seguridad, lo abre normal
+                                window.open(boleto.pdfUrl, '_blank');
+                            }
+                        }, index * 1000); // 1 segundo de espera entre descargas si son varios
+                    }
+                });
+            }
+
             alert(
-                `✅ ${data.total} boleto(s) generado(s).\n\nRevisa tu correo electrónico.`
+                `✅ ${data.total} boleto(s) generado(s).\n\nLa descarga de tu boleto iniciará automáticamente en tu dispositivo.`
             );
 
-            document.getElementById(
-                "nombre"
-            ).value = "";
-
-            document.getElementById(
-                "correo"
-            ).value = "";
-
-            document.getElementById(
-                "telefono"
-            ).value = "";
-
-            document.getElementById(
-                "cantidad"
-            ).value = 1;
-
+            document.getElementById("nombre").value = "";
+            document.getElementById("correo").value = "";
+            document.getElementById("telefono").value = "";
+            document.getElementById("cantidad").value = 1;
             actualizar();
 
         }else{
-
-            alert(
-                "❌ " +
-                (data.error ||
-                "Error desconocido")
-            );
-
+            alert("❌ " + (data.error || "Error desconocido"));
         }
 
     }catch(error){
-
-        console.error(
-            "ERROR:",
-            error
-        );
-
-        alert(
-            "❌ No se pudo conectar con el servidor."
-        );
-
+        console.error("ERROR:", error);
+        alert("❌ No se pudo conectar con el servidor.");
     }finally{
-
         boton.disabled = false;
-
-        boton.innerHTML =
-        "GENERAR BOLETOS";
-
+        boton.innerHTML = "GENERAR BOLETOS";
     }
 
 });
