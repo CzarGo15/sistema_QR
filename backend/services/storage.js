@@ -69,12 +69,17 @@ SUBIR FLYER
 ==================================
 */
 
-async function subirFlyer(rutaImagen) {
+async function subirFlyer(
+    rutaImagen,
+    nombreOriginal
+) {
 
     try {
 
         const extension =
-            path.extname(rutaImagen);
+            path.extname(
+                nombreOriginal
+            );
 
         const nombreArchivo =
             `flyers/evento-${Date.now()}${extension}`;
@@ -113,7 +118,6 @@ async function subirFlyer(rutaImagen) {
     }
 
 }
-
 module.exports = {
     subirPDF,
     subirFlyer
