@@ -473,7 +473,7 @@ document.getElementById("generalCard").onclick = ()=>{
 actualizar();
 
 // Función de generación PDF mejorada y libre de distorsiones
-async function generarPDFLocal(boleto) {
+
     return new Promise((resolve) => {
         // 1. Extraemos el HTML crudo del <template>
         const templateHtml = document.getElementById('boleto-template').innerHTML;
@@ -566,14 +566,26 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
 
         const data = await respuesta.json();
 
-        if(data.success){
+       if(data.success){
 
-            // 2. Ejecutamos la generación visual de cada boleto comprado
-            if(data.boletos && data.boletos.length > 0) {
-                for (const boleto of data.boletos) {
-                    await generarPDFLocal(boleto);
-                }
-            }
+    if(data.boletos && data.boletos.length > 0){
+
+        for(const boleto of data.boletos){
+
+            const link =
+                document.createElement('a');
+
+            link.href =
+                boleto.pdfUrl;
+
+            link.target =
+                '_blank';
+
+            link.click();
+
+        }
+
+    }
 
             alert(`✅ ${data.total} boleto(s) generado(s).\n\nEl archivo se descargó automáticamente.`);
 
