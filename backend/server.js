@@ -1,77 +1,226 @@
-require('dotenv').config();
-
 const express = require('express');
-const cors = require('cors');
+const db = require('../firebase');
 
-const boletosRoutes =
-require('./routes/boletos');
-
-const validarRoutes =
-require('./routes/validar');
-
-const dashboardRoutes =
-require('./routes/dashboard');
-
-const app = express();
-
-app.use(cors());
-
-app.use(express.json());
+const router = express.Router();
 
 /*
 ==================================
-RUTAS
+LISTAR EVENTOS
+GET /api/eventos
 ==================================
 */
 
-app.use(
-'/api/boletos',
-boletosRoutes
-);
+router.get('/', async (req, res) => {
 
-app.use(
-'/api/validar',
-validarRoutes
-);
+    try {
 
-app.use(
-'/api/dashboard',
-dashboardRoutes
-);
+        const snapshot =
+            await db
+                .collection('eventos')
+                .get();
 
-/*
-==================================
-HOME
-==================================
-*/
+        const eventos = [];
 
-app.get('/', (req, res) => {
+        snapshot.forEach(doc => {
 
-    res.json({
+            eventos.push({
 
-        sistema: 'Fiesta Retro',
+                id: doc.id,
 
-        estado: 'Activo',
+                ...doc.data()
 
-        version: '1.0'
+            });
 
-    });
+        });
+
+        res.json(eventos);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success: false,
+            error: error.message
+
+        });
+
+    }
 
 });
 
 /*
 ==================================
-SERVER
+OBTENER EVENTO
+GET /api/eventos/:id
 ==================================
 */
 
-const PORT =
-process.env.PORT || 3000;
+router.get('/:id', async (req, res) => {
 
-app.listen(PORT, () => {
+    try {
 
-    console.log(
-        `Servidor iniciado en puerto ${PORT}`
-    );
+        const doc =
+            await db
+                .collection('eventos')
+                .doc(req.params.id)
+                .get();
+
+        if (!doc.exists) {
+
+            return res.status(404).json({
+
+                success: false,
+                error: 'Evento no encontrado'
+
+            });
+
+        }
+
+        res.json({
+
+            id: doc.id,
+
+            ...doc.data()
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success: false,
+            error: error.message
+
+        });
+
+    }
 
 });
+
+/*
+==================================
+CREAR EVENTO
+POST /api/eventos
+==================================
+*/
+
+router.post('/', async (req, res) => {
+
+    try {
+
+        const evento = {
+
+            ...req.body,
+
+            fechaCreacion:
+                new Date()
+
+        };
+
+        const docRef =
+            await db
+                .collection('eventos')
+                .add(evento);
+
+        res.json({
+
+            success: true,
+
+            id: docRef.id
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success: false,
+            error: error.message
+
+        });
+
+    }
+
+});
+
+/*
+==================================
+ACTUALIZAR EVENTO
+PUT /api/eventos/:id
+==================================
+*/
+
+router.put('/:id', async (req, res) => {
+
+    try {
+
+        await db
+            .collection('eventos')
+            .doc(req.params.id)
+            .update(req.body);
+
+        res.json({
+
+            success: true
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success: false,
+            error: error.message
+
+        });
+
+    }
+
+});
+
+/*
+==================================
+ELIMINAR EVENTO
+DELETE /api/eventos/:id
+==================================
+*/
+
+router.delete('/:id', async (req, res) => {
+
+    try {
+
+        await db
+            .collection('eventos')
+            .doc(req.params.id)
+            .delete();
+
+        res.json({
+
+            success: true
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+
+            success: false,
+            error: error.message
+
+        });
+
+    }
+
+});
+
+module.exports = router;
