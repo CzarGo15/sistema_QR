@@ -89,7 +89,7 @@ rgba(0,0,0,.8)
     top: -15px;
     width: 30px;
     height: 30px;
-    background-color: #e2e8f0; /* Color que simula el recorte exterior */
+    background-color: #ffffff; /* Color de fondo de la hoja */
     border-radius: 50%;
     z-index: 10;
 }
@@ -363,8 +363,11 @@ GENERAR BOLETOS
 <!-- ==========================================
      PLANTILLA OCULTA PARA EL PDF 
      ========================================== -->
-<div style="position: absolute; top: -10000px; left: -10000px; width: 384px; background-color: white;" id="impresion-container">
-    <div id="ticket-template" class="ticket-card bg-white w-full overflow-hidden" style="border-radius: 20px;">
+<!-- Creamos un contenedor con las proporciones exactas de una hoja tamaño carta (816x1056 px) -->
+<div style="position: absolute; top: -10000px; left: -10000px; width: 816px; height: 1056px; background-color: white; padding-top: 50px; display: flex; justify-content: center;" id="pdf-wrapper">
+    
+    <!-- Este es tu boleto, centrado en la hoja blanca con sus dimensiones originales -->
+    <div id="ticket-template" class="ticket-card bg-white overflow-hidden" style="border-radius: 20px; width: 384px; height: max-content;">
         
         <!-- FLYER -->
         <div class="h-64 w-full bg-cover bg-center relative" style="background-image:url('https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200');">
@@ -450,10 +453,10 @@ document.getElementById("generalCard").onclick = ()=>{
 
 actualizar();
 
-// Función que genera y descarga localmente el PDF con tamaño ajustado
+// Función que genera y descarga localmente el PDF usando html2pdf
 async function generarPDFLocal(boleto) {
     return new Promise((resolve) => {
-        // Llenar datos
+        // Llenar datos en la plantilla
         document.getElementById('ticket-tipo').innerText = "70's • 80's • 90's • " + boleto.tipo;
         document.getElementById('ticket-nombre').innerText = boleto.nombre;
         document.getElementById('ticket-correo').innerText = boleto.correo;
@@ -462,31 +465,26 @@ async function generarPDFLocal(boleto) {
         
         const qrImg = document.getElementById('ticket-qr');
         
+        // Cuando el QR termine de cargar, capturamos toda la hoja Carta (pdf-wrapper)
         qrImg.onload = () => {
-            const template = document.getElementById('ticket-template');
+            const wrapper = document.getElementById('pdf-wrapper');
             
-            // Calculamos el tamaño en pixeles del boleto
-            const widthPx = template.offsetWidth;
-            const heightPx = template.offsetHeight;
-
-            // Convertimos pixeles a pulgadas (aprox 96 dpi) para decirle a jsPDF el tamaño exacto de la página
-            const widthIn = widthPx / 96;
-            const heightIn = heightPx / 96;
-
             const opt = {
                 margin:       0,
                 filename:     `Boleto_Exelaris_${boleto.folio}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                // Configuración dinámica del tamaño de página
-                jsPDF:        { unit: 'in', format: [widthIn, heightIn], orientation: 'portrait' }
+                html2canvas:  { scale: 2, useCORS: true }, 
+                // Usamos el formato fijo 'letter' (carta)
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
-            html2pdf().set(opt).from(template).save().then(() => {
+            // Generar y forzar descarga
+            html2pdf().set(opt).from(wrapper).save().then(() => {
                 resolve();
             });
         };
         
+        // Generar el QR usando una API pública rápida
         qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + boleto.uuid;
     });
 }
@@ -509,6 +507,7 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
         boton.disabled = true;
         boton.innerHTML = "⏳ Generando boletos...";
 
+        // Enviamos los datos a tu backend real
         const respuesta = await fetch(
             "https://fiestaretro-api.onrender.com/api/boletos/comprar",
             {
@@ -530,6 +529,7 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
 
         if(data.success){
 
+            // Generamos y descargamos localmente los PDFs usando la plantilla hoja Carta
             if(data.boletos && data.boletos.length > 0) {
                 for (const boleto of data.boletos) {
                     await generarPDFLocal(boleto);
@@ -538,6 +538,7 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
 
             alert(`✅ ${data.total} boleto(s) generado(s).\n\nEl diseño visual de tu boleto se ha descargado en tu dispositivo.`);
 
+            // Limpiamos los campos
             document.getElementById("nombre").value = "";
             document.getElementById("correo").value = "";
             document.getElementById("telefono").value = "";
