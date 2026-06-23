@@ -69,13 +69,12 @@ rgba(0,0,0,.8)
 }
 
 /* ==========================================
-   ESTILOS DE LA PLANTILLA DEL BOLETO PDF
+   ESTILOS ORIGINALES DE TU BOLETO.HTML
    ========================================== */
 .ticket-card {
-    width: 384px; /* Tamaño fijo exacto para evitar recortes */
-    background: white;
-    border-radius: 24px;
-    overflow: hidden;
+    /* Mantenemos tus sombras en CSS original, pero las anularemos en impresión */
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,.2));
 }
 
 .ticket-divider {
@@ -84,7 +83,6 @@ rgba(0,0,0,.8)
     margin: 0 20px;
 }
 
-/* Los recortes circulares del boleto */
 .ticket-divider::before,
 .ticket-divider::after {
     content: '';
@@ -100,6 +98,16 @@ rgba(0,0,0,.8)
 .ticket-divider::before { left: -35px; }
 .ticket-divider::after { right: -35px; }
 
+/* ⚠️ CLAVE PARA EVITAR DISTORSIÓN EN EL PDF ⚠️
+   Al imprimir, quitamos las sombras (que expanden el canvas) 
+   y fijamos rigurosamente el ancho. */
+#impresion-container .ticket-card {
+    box-shadow: none !important;
+    filter: none !important;
+    width: 384px !important;
+    margin: 0 !important;
+}
+
 </style>
 
 </head>
@@ -107,24 +115,24 @@ rgba(0,0,0,.8)
 <body class="relative">
 
 <!-- ==========================================
-     PLANTILLA OCULTA PARA EL PDF 
-     (Se dibuja en el DOM para evitar que salga en blanco)
+     PLANTILLA CON ESTRUCTURA EXACTA DE BOLETO.HTML
+     Usamos las etiquetas {{VARIABLE}} para reemplazar con JS
      ========================================== -->
-<div id="impresion-container" style="position: absolute; top: 0; left: 0; z-index: -100; opacity: 0.01; pointer-events: none; padding: 10px;">
-    <div id="ticket-template" class="ticket-card relative">
+<template id="boleto-template">
+    <div class="ticket-card bg-white w-[384px] max-w-sm rounded-3xl overflow-hidden">
         
-        <!-- FLYER (Se usa img en vez de background-image para evitar fallo en html2canvas) -->
-        <div class="h-64 w-full relative bg-slate-900">
+        <!-- FLYER -->
+        <div class="h-64 w-full bg-cover bg-center relative bg-slate-900">
+            <!-- Usamos img en lugar de background-image para que html2canvas no falle por CORS -->
             <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800" crossorigin="anonymous" class="absolute inset-0 w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
             
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
             <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white text-[10px] font-black px-3 py-1.5 rounded-full">
                 Exelaris Presenta
             </div>
-            
             <div class="absolute bottom-4 left-5 right-5 text-white">
                 <h1 class="text-3xl font-black leading-none mb-1">Fiesta Retro</h1>
-                <p id="ticket-tipo" class="text-sm font-semibold text-blue-400">70's • 80's • 90's • VIP</p>
+                <p class="text-sm font-semibold text-blue-400">70's • 80's • 90's • {{TIPO}}</p>
             </div>
         </div>
         
@@ -148,30 +156,31 @@ rgba(0,0,0,.8)
                 </div>
                 <div class="col-span-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <p class="text-[10px] text-slate-400 font-bold uppercase">Titular del boleto</p>
-                    <p id="ticket-nombre" class="text-base font-black text-blue-950">Nombre Completo</p>
-                    <p id="ticket-correo" class="text-xs text-slate-500">correo@ejemplo.com</p>
-                    <p id="ticket-folio" class="text-sm font-bold text-slate-700 mt-1">Folio: EXL-000000</p>
+                    <p class="text-base font-black text-blue-950">{{NOMBRE}}</p>
+                    <p class="text-xs text-slate-500">{{CORREO}}</p>
+                    <p class="text-sm font-bold text-slate-700 mt-1">Folio: {{FOLIO}}</p>
                 </div>
             </div>
         </div>
         
         <!-- SEPARADOR -->
-        <div class="bg-slate-50 w-full pt-2">
-            <div class="ticket-divider"></div>
-        </div>
+        <div class="ticket-divider"></div>
         
         <!-- QR -->
-        <div class="px-6 pt-6 pb-8 bg-slate-50 flex flex-col items-center">
-            <!-- Marco blanco para el QR -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
-                <img id="ticket-qr" src="" style="width:180px; height:180px;" crossorigin="anonymous" alt="QR">
-            </div>
-            <p id="ticket-uuid" class="text-xs font-mono text-slate-500 mt-5 tracking-widest font-bold">UUID</p>
-            <p class="text-[10px] text-slate-400 text-center mt-3">Presenta este código QR al ingresar al evento.</p>
+        <div class="px-6 pt-8 pb-8 bg-slate-50 flex flex-col items-center">
+            <!-- ID para controlar el onload desde JS -->
+            <img id="ticket-qr" src="{{QR}}" style="width:200px; height:200px;" crossorigin="anonymous" alt="QR">
+            
+            <p class="text-xs font-mono text-slate-500 mt-4 tracking-widest font-bold">{{UUID}}</p>
+            <p class="text-[10px] text-slate-400 text-center mt-4">Presenta este código QR al ingresar al evento.</p>
         </div>
         
     </div>
-</div>
+</template>
+
+<!-- Contenedor oculto donde renderizamos temporalmente la plantilla -->
+<div id="impresion-container" style="position: absolute; top: 0; left: 0; z-index: -100; opacity: 0.01; pointer-events: none; padding: 10px;"></div>
+
 
 <div class="container mx-auto px-4 py-10 relative z-10">
 
@@ -463,40 +472,58 @@ document.getElementById("generalCard").onclick = ()=>{
 
 actualizar();
 
-// Función que genera y descarga localmente el PDF con tamaño ajustado
+// Función de generación PDF mejorada y libre de distorsiones
 async function generarPDFLocal(boleto) {
     return new Promise((resolve) => {
-        // Llenamos los datos en el HTML oculto
-        document.getElementById('ticket-tipo').innerText = "70's • 80's • 90's • " + boleto.tipo;
-        document.getElementById('ticket-nombre').innerText = boleto.nombre;
-        document.getElementById('ticket-correo').innerText = boleto.correo;
-        document.getElementById('ticket-folio').innerText = "Folio: " + boleto.folio;
-        document.getElementById('ticket-uuid').innerText = boleto.uuid;
+        // 1. Extraemos el HTML crudo del <template>
+        const templateHtml = document.getElementById('boleto-template').innerHTML;
         
-        const qrImg = document.getElementById('ticket-qr');
-        
-        // Esperamos a que la imagen del QR termine de cargar en el navegador
-        qrImg.onload = () => {
-            const template = document.getElementById('ticket-template');
+        // 2. Realizamos los reemplazos exactos usando {{VARIABLES}}
+        let htmlFinal = templateHtml
+            .replace(/{{TIPO}}/g, boleto.tipo)
+            .replace(/{{NOMBRE}}/g, boleto.nombre)
+            .replace(/{{CORREO}}/g, boleto.correo)
+            .replace(/{{FOLIO}}/g, boleto.folio)
+            .replace(/{{UUID}}/g, boleto.uuid)
+            .replace(/{{QR}}/g, ""); // Dejamos el SRC vacío para controlarlo con js
             
-            // Forzamos las dimensiones en pixeles para jsPDF para que el PDF 
-            // mida EXACTAMENTE lo que mide la tarjeta del boleto.
+        // 3. Lo inyectamos en nuestro div oculto seguro
+        const container = document.getElementById('impresion-container');
+        container.innerHTML = htmlFinal;
+        
+        // Obtenemos las referencias a los elementos recién creados
+        const elemento = container.querySelector('.ticket-card');
+        const qrImg = container.querySelector('#ticket-qr');
+        
+        // 4. Cuando el código QR real haya cargado desde la API, creamos el PDF
+        qrImg.onload = () => {
             const opt = {
                 margin:       0,
                 filename:     `Boleto_Exelaris_${boleto.folio}.pdf`,
                 image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true }, 
-                // Usamos formato dinámico basado en las medidas del elemento HTML
-                jsPDF:        { unit: 'px', format: [template.offsetWidth, template.offsetHeight], orientation: 'portrait' }
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    width: 384, // 🔥 ANCHO FIJO EXACTO: Previene el efecto lupa/distorsión
+                    windowWidth: 384, 
+                    backgroundColor: '#ffffff'
+                }, 
+                jsPDF:        { 
+                    unit: 'px', 
+                    // 🔥 FORMATO EXACTO: 384px de ancho por la altura calculada
+                    format: [384, elemento.offsetHeight], 
+                    orientation: 'portrait' 
+                }
             };
             
-            // Generamos el PDF localmente
-            html2pdf().set(opt).from(template).save().then(() => {
+            // Renderizamos y descargamos
+            html2pdf().set(opt).from(elemento).save().then(() => {
+                container.innerHTML = ""; // Limpiamos la memoria
                 resolve();
             });
         };
         
-        // URL rápida para generar el QR
+        // Disparamos la carga de la imagen QR
         qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + boleto.uuid;
     });
 }
