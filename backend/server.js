@@ -73,10 +73,8 @@ UPLOAD FLYER
 ==================================
 */
 
-app.use(
-    '/api/eventos',
-    eventosRoutes
-);
+const uploadRoutes =
+require('./routes/upload');
 
 app.use(
     '/api/upload',
