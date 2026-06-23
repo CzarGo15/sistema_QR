@@ -1,5 +1,3 @@
-server.js
-
 require('dotenv').config();
 
 const express = require('express');
@@ -14,6 +12,9 @@ require('./routes/validar');
 const dashboardRoutes =
 require('./routes/dashboard');
 
+const eventosRoutes =
+require('./routes/eventos');
+
 const app = express();
 
 app.use(cors());
@@ -27,18 +28,23 @@ RUTAS
 */
 
 app.use(
-'/api/boletos',
-boletosRoutes
+    '/api/boletos',
+    boletosRoutes
 );
 
 app.use(
-'/api/validar',
-validarRoutes
+    '/api/validar',
+    validarRoutes
 );
 
 app.use(
-'/api/dashboard',
-dashboardRoutes
+    '/api/dashboard',
+    dashboardRoutes
+);
+
+app.use(
+    '/api/eventos',
+    eventosRoutes
 );
 
 /*
@@ -55,7 +61,7 @@ app.get('/', (req, res) => {
 
         estado: 'Activo',
 
-        version: '1.0'
+        version: '2.0'
 
     });
 
@@ -68,7 +74,7 @@ SERVER
 */
 
 const PORT =
-process.env.PORT || 3000;
+    process.env.PORT || 3000;
 
 app.listen(PORT, () => {
 
