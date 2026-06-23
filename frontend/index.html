@@ -474,60 +474,7 @@ actualizar();
 
 // Función de generación PDF mejorada y libre de distorsiones
 
-    return new Promise((resolve) => {
-        // 1. Extraemos el HTML crudo del <template>
-        const templateHtml = document.getElementById('boleto-template').innerHTML;
-        
-        // 2. Realizamos los reemplazos exactos usando {{VARIABLES}}
-        let htmlFinal = templateHtml
-            .replace(/{{TIPO}}/g, boleto.tipo)
-            .replace(/{{NOMBRE}}/g, boleto.nombre)
-            .replace(/{{CORREO}}/g, boleto.correo)
-            .replace(/{{FOLIO}}/g, boleto.folio)
-            .replace(/{{UUID}}/g, boleto.uuid)
-            .replace(/{{QR}}/g, ""); // Dejamos el SRC vacío para controlarlo con js
-            
-        // 3. Lo inyectamos en nuestro div oculto seguro
-        const container = document.getElementById('impresion-container');
-        container.innerHTML = htmlFinal;
-        
-        // Obtenemos las referencias a los elementos recién creados
-        const elemento = container.querySelector('.ticket-card');
-        const qrImg = container.querySelector('#ticket-qr');
-        
-        // 4. Cuando el código QR real haya cargado desde la API, creamos el PDF
-        qrImg.onload = () => {
-            const opt = {
-                margin:       0,
-                filename:     `Boleto_Exelaris_${boleto.folio}.pdf`,
-                image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true, 
-                    width: 384, // 🔥 ANCHO FIJO EXACTO: Previene el efecto lupa/distorsión
-                    windowWidth: 384, 
-                    backgroundColor: '#ffffff'
-                }, 
-                jsPDF:        { 
-                    unit: 'px', 
-                    // 🔥 FORMATO EXACTO: 384px de ancho por la altura calculada
-                    format: [384, elemento.offsetHeight], 
-                    orientation: 'portrait' 
-                }
-            };
-            
-            // Renderizamos y descargamos
-            html2pdf().set(opt).from(elemento).save().then(() => {
-                container.innerHTML = ""; // Limpiamos la memoria
-                resolve();
-            });
-        };
-        
-        // Disparamos la carga de la imagen QR
-        qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + boleto.uuid;
-    });
-}
-
+   
 document.getElementById("btnComprar").addEventListener("click", async () => {
 
     const boton = document.getElementById("btnComprar");
@@ -568,20 +515,27 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
 
        if(data.success){
 
+    console.log(data);
+
     if(data.boletos && data.boletos.length > 0){
 
         for(const boleto of data.boletos){
 
-            const link =
-                document.createElement('a');
+            if(boleto.pdfUrl){
 
-            link.href =
-                boleto.pdfUrl;
+                window.open(
+                    boleto.pdfUrl,
+                    '_blank'
+                );
 
-            link.target =
-                '_blank';
+            }else{
 
-            link.click();
+                console.error(
+                    'No existe pdfUrl',
+                    boleto
+                );
+
+            }
 
         }
 
