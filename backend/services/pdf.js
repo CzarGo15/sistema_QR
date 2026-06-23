@@ -1,186 +1,136 @@
-const PDFDocument = require('pdfkit');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
 async function generarPDF(datos) {
 
-    return new Promise((resolve, reject) => {
+    try {
 
-        try {
+        const plantilla =
+            path.join(
+                __dirname,
+                '../../frontend/boleto.html'
+            );
 
-            const carpetaPDF = path.join(
+        let html =
+            fs.readFileSync(
+                plantilla,
+                'utf8'
+            );
+
+        html = html.replace(
+            /{{NOMBRE}}/g,
+            datos.nombre
+        );
+
+        html = html.replace(
+            /{{CORREO}}/g,
+            datos.correo
+        );
+
+        html = html.replace(
+            /{{FOLIO}}/g,
+            datos.folio
+        );
+
+        html = html.replace(
+            /{{TIPO}}/g,
+            datos.tipo
+        );
+
+        html = html.replace(
+            /{{UUID}}/g,
+            datos.uuid
+        );
+
+        html = html.replace(
+            /{{QR}}/g,
+            datos.qr
+        );
+
+        const carpetaPDF =
+            path.join(
                 __dirname,
                 '../pdfs'
             );
 
-            if (!fs.existsSync(carpetaPDF)) {
+        if (!fs.existsSync(carpetaPDF)) {
 
-                fs.mkdirSync(
-                    carpetaPDF,
-                    {
-                        recursive: true
-                    }
-                );
+            fs.mkdirSync(
+                carpetaPDF,
+                {
+                    recursive: true
+                }
+            );
 
-            }
+        }
 
-            const rutaPDF = path.join(
+        const rutaPDF =
+            path.join(
                 carpetaPDF,
                 `boleto-${datos.folio}.pdf`
             );
 
-            const doc = new PDFDocument({
+        const browser =
+            await puppeteer.launch({
 
-                size: [300, 600],
-                margin: 20
+                headless: true,
+
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox'
+                ]
 
             });
 
-            const stream =
-                fs.createWriteStream(
-                    rutaPDF
-                );
+        const page =
+            await browser.newPage();
 
-            doc.pipe(stream);
+        await page.setContent(
+            html,
+            {
+                waitUntil:
+                    'networkidle0'
+            }
+        );
 
-            // ENCABEZADO
+        await page.pdf({
 
-            doc
-                .rect(0, 0, 300, 90)
-                .fill('#1e3a8a');
+            path: rutaPDF,
 
-            doc
-                .fillColor('white')
-                .fontSize(24)
-                .text(
-                    'FIESTA RETRO',
-                    0,
-                    25,
-                    {
-                        align: 'center'
-                    }
-                );
+            printBackground: true,
 
-            doc
-                .fontSize(11)
-                .text(
-                    "70's • 80's • 90's",
-                    {
-                        align: 'center'
-                    }
-                );
+            width: '420px',
 
-            doc.moveDown(5);
+            height: '900px',
 
-            // EVENTO
+            margin: {
+                top: '0px',
+                right: '0px',
+                bottom: '0px',
+                left: '0px'
+            }
 
-            doc
-                .fillColor('black')
-                .fontSize(11);
+        });
 
-            doc.text('Fecha: 31 Octubre 2026');
-            doc.text('Hora: 20:00 HRS');
-            doc.text('Lugar: Salon SUTERM');
-            doc.text('Coatzacoalcos, Veracruz');
+        await browser.close();
 
-            doc.moveDown();
+        console.log(
+            `PDF generado: ${rutaPDF}`
+        );
 
-            // TITULAR
+        return rutaPDF;
 
-            doc
-                .fontSize(18)
-                .fillColor('#1e3a8a')
-                .text('DATOS DEL BOLETO');
+    } catch (error) {
 
-            doc.moveDown();
+        console.error(
+            'ERROR PDF:',
+            error
+        );
 
-            doc
-                .fillColor('black')
-                .fontSize(12);
+        throw error;
 
-            doc.text(`Nombre: ${datos.nombre}`);
-            doc.text(`Correo: ${datos.correo}`);
-            doc.text(`Folio: ${datos.folio}`);
-            doc.text(`Tipo: ${datos.tipo}`);
-
-            doc.moveDown();
-
-            // QR
-
-            const qrBase64 =
-                datos.qr.replace(
-                    /^data:image\/png;base64,/,
-                    ''
-                );
-
-            const qrBuffer =
-                Buffer.from(
-                    qrBase64,
-                    'base64'
-                );
-
-            doc.image(
-                qrBuffer,
-                80,
-                doc.y,
-                {
-                    width: 140
-                }
-            );
-
-            doc.moveDown(8);
-
-            doc
-                .fontSize(8)
-                .fillColor('gray')
-                .text(
-                    datos.uuid,
-                    {
-                        align: 'center'
-                    }
-                );
-
-            doc.moveDown();
-
-            doc
-                .fontSize(10)
-                .fillColor('black')
-                .text(
-                    'Presenta este QR al ingresar al evento.',
-                    {
-                        align: 'center'
-                    }
-                );
-
-            doc.end();
-
-            stream.on(
-                'finish',
-                () => {
-
-                    console.log(
-                        `PDF generado: ${rutaPDF}`
-                    );
-
-                    resolve(
-                        rutaPDF
-                    );
-
-                }
-            );
-
-            stream.on(
-                'error',
-                reject
-            );
-
-        } catch (error) {
-
-            reject(error);
-
-        }
-
-    });
+    }
 
 }
 
