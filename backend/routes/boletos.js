@@ -105,19 +105,20 @@ router.post('/comprar', async (req, res) => {
 
             const boleto = {
 
-                uuid,
-                folio,
-                nombre,
-                correo,
-                telefono,
-                tipo,
-                precio,
+    uuid,
+    folio,
+    nombre,
+    correo,
+    telefono,
+    tipo,
+    precio,
+    qr,
 
-                estado: 'activo',
+    estado: 'activo',
 
-                fechaCompra: new Date()
+    fechaCompra: new Date()
 
-            };
+};
 
             await db
                 .collection('boletos')
