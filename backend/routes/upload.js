@@ -41,10 +41,10 @@ router.post(
             }
 
             const url =
-                await subirFlyer(
-                    req.file.path
-                );
-
+    await subirFlyer(
+        req.file.path,
+        req.file.originalname
+    );
             fs.unlinkSync(
                 req.file.path
             );
