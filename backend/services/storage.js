@@ -1,4 +1,5 @@
 const { Storage } = require('@google-cloud/storage');
+const path = require('path');
 
 const storage = new Storage({
 
@@ -13,6 +14,12 @@ const storage = new Storage({
 const bucket = storage.bucket(
     'sistemaqr-a4d32.firebasestorage.app'
 );
+
+/*
+==================================
+SUBIR PDF
+==================================
+*/
 
 async function subirPDF(rutaPDF, folio) {
 
@@ -41,20 +48,12 @@ async function subirPDF(rutaPDF, folio) {
 
             });
 
-        console.log(
-            '☁️ PDF subido correctamente:'
-        );
-
-        console.log(
-            urlFirmada
-        );
-
         return urlFirmada;
 
     } catch (error) {
 
         console.error(
-            '❌ ERROR STORAGE:',
+            '❌ ERROR STORAGE PDF:',
             error
         );
 
@@ -64,4 +63,58 @@ async function subirPDF(rutaPDF, folio) {
 
 }
 
-module.exports = subirPDF;
+/*
+==================================
+SUBIR FLYER
+==================================
+*/
+
+async function subirFlyer(rutaImagen) {
+
+    try {
+
+        const extension =
+            path.extname(rutaImagen);
+
+        const nombreArchivo =
+            `flyers/evento-${Date.now()}${extension}`;
+
+        await bucket.upload(
+            rutaImagen,
+            {
+                destination: nombreArchivo,
+                resumable: false
+            }
+        );
+
+        const file =
+            bucket.file(nombreArchivo);
+
+        const [urlFirmada] =
+            await file.getSignedUrl({
+
+                action: 'read',
+
+                expires: '01-01-2035'
+
+            });
+
+        return urlFirmada;
+
+    } catch (error) {
+
+        console.error(
+            '❌ ERROR STORAGE FLYER:',
+            error
+        );
+
+        throw error;
+
+    }
+
+}
+
+module.exports = {
+    subirPDF,
+    subirFlyer
+};
