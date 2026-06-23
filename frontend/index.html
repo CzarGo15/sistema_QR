@@ -69,11 +69,13 @@ rgba(0,0,0,.8)
 }
 
 /* ==========================================
-   ESTILOS DE LA PLANTILLA DEL BOLETO
+   ESTILOS DE LA PLANTILLA DEL BOLETO PDF
    ========================================== */
 .ticket-card {
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,.2));
+    width: 384px; /* Tamaño fijo exacto para evitar recortes */
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
 }
 
 .ticket-divider {
@@ -82,6 +84,7 @@ rgba(0,0,0,.8)
     margin: 0 20px;
 }
 
+/* Los recortes circulares del boleto */
 .ticket-divider::before,
 .ticket-divider::after {
     content: '';
@@ -89,7 +92,7 @@ rgba(0,0,0,.8)
     top: -15px;
     width: 30px;
     height: 30px;
-    background-color: #ffffff; /* Color de fondo de la hoja */
+    background-color: #ffffff;
     border-radius: 50%;
     z-index: 10;
 }
@@ -101,9 +104,76 @@ rgba(0,0,0,.8)
 
 </head>
 
-<body>
+<body class="relative">
 
-<div class="container mx-auto px-4 py-10">
+<!-- ==========================================
+     PLANTILLA OCULTA PARA EL PDF 
+     (Se dibuja en el DOM para evitar que salga en blanco)
+     ========================================== -->
+<div id="impresion-container" style="position: absolute; top: 0; left: 0; z-index: -100; opacity: 0.01; pointer-events: none; padding: 10px;">
+    <div id="ticket-template" class="ticket-card relative">
+        
+        <!-- FLYER (Se usa img en vez de background-image para evitar fallo en html2canvas) -->
+        <div class="h-64 w-full relative bg-slate-900">
+            <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800" crossorigin="anonymous" class="absolute inset-0 w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+            
+            <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white text-[10px] font-black px-3 py-1.5 rounded-full">
+                Exelaris Presenta
+            </div>
+            
+            <div class="absolute bottom-4 left-5 right-5 text-white">
+                <h1 class="text-3xl font-black leading-none mb-1">Fiesta Retro</h1>
+                <p id="ticket-tipo" class="text-sm font-semibold text-blue-400">70's • 80's • 90's • VIP</p>
+            </div>
+        </div>
+        
+        <!-- DATOS -->
+        <div class="p-6 bg-white">
+            <div class="grid grid-cols-2 gap-y-5 gap-x-4">
+                <div>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Fecha</p>
+                    <p class="text-sm font-black text-slate-800">31 Octubre 2026</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Puertas</p>
+                    <p class="text-sm font-black text-slate-800">20:00 HRS</p>
+                </div>
+                <div class="col-span-2">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Ubicación</p>
+                    <p class="text-sm font-bold text-slate-800">
+                        Salón SUTERM<br>
+                        <span class="text-xs text-slate-500">Av. Mariano Matamoros 1128 Coatzacoalcos, Veracruz</span>
+                    </p>
+                </div>
+                <div class="col-span-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Titular del boleto</p>
+                    <p id="ticket-nombre" class="text-base font-black text-blue-950">Nombre Completo</p>
+                    <p id="ticket-correo" class="text-xs text-slate-500">correo@ejemplo.com</p>
+                    <p id="ticket-folio" class="text-sm font-bold text-slate-700 mt-1">Folio: EXL-000000</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SEPARADOR -->
+        <div class="bg-slate-50 w-full pt-2">
+            <div class="ticket-divider"></div>
+        </div>
+        
+        <!-- QR -->
+        <div class="px-6 pt-6 pb-8 bg-slate-50 flex flex-col items-center">
+            <!-- Marco blanco para el QR -->
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+                <img id="ticket-qr" src="" style="width:180px; height:180px;" crossorigin="anonymous" alt="QR">
+            </div>
+            <p id="ticket-uuid" class="text-xs font-mono text-slate-500 mt-5 tracking-widest font-bold">UUID</p>
+            <p class="text-[10px] text-slate-400 text-center mt-3">Presenta este código QR al ingresar al evento.</p>
+        </div>
+        
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-10 relative z-10">
 
 <div class="grid xl:grid-cols-3 gap-8">
 
@@ -360,66 +430,6 @@ GENERAR BOLETOS
 
 </div>
 
-<!-- ==========================================
-     PLANTILLA OCULTA PARA EL PDF 
-     ========================================== -->
-<!-- Creamos un contenedor con las proporciones exactas de una hoja tamaño carta (816x1056 px) -->
-<div style="position: absolute; top: -10000px; left: -10000px; width: 816px; height: 1056px; background-color: white; padding-top: 50px; display: flex; justify-content: center;" id="pdf-wrapper">
-    
-    <!-- Este es tu boleto, centrado en la hoja blanca con sus dimensiones originales -->
-    <div id="ticket-template" class="ticket-card bg-white overflow-hidden" style="border-radius: 20px; width: 384px; height: max-content;">
-        
-        <!-- FLYER -->
-        <div class="h-64 w-full bg-cover bg-center relative" style="background-image:url('https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200');">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-            <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white text-[10px] font-black px-3 py-1.5 rounded-full">
-                Exelaris Presenta
-            </div>
-            <div class="absolute bottom-4 left-5 right-5 text-white">
-                <h1 class="text-3xl font-black leading-none mb-1">Fiesta Retro</h1>
-                <p id="ticket-tipo" class="text-sm font-semibold text-blue-400">70's • 80's • 90's • VIP</p>
-            </div>
-        </div>
-        
-        <!-- DATOS -->
-        <div class="p-6 bg-white">
-            <div class="grid grid-cols-2 gap-y-5 gap-x-4">
-                <div>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Fecha</p>
-                    <p class="text-sm font-black text-slate-800">31 Octubre 2026</p>
-                </div>
-                <div>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Puertas</p>
-                    <p class="text-sm font-black text-slate-800">20:00 HRS</p>
-                </div>
-                <div class="col-span-2">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Ubicación</p>
-                    <p class="text-sm font-bold text-slate-800">
-                        Salón SUTERM<br>
-                        <span class="text-xs text-slate-500">Av. Mariano Matamoros 1128 Coatzacoalcos, Veracruz</span>
-                    </p>
-                </div>
-                <div class="col-span-2 bg-slate-50 p-3 rounded-xl border">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Titular del boleto</p>
-                    <p id="ticket-nombre" class="text-base font-black text-blue-950">Nombre</p>
-                    <p id="ticket-correo" class="text-xs text-slate-500">correo@ejemplo.com</p>
-                    <p id="ticket-folio" class="text-sm font-bold text-slate-700">Folio: EXL-000000</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- SEPARADOR -->
-        <div class="ticket-divider"></div>
-        
-        <!-- QR -->
-        <div class="px-6 pt-8 pb-8 bg-slate-50 flex flex-col items-center">
-            <img id="ticket-qr" src="" style="width:200px; height:200px;" crossorigin="anonymous" alt="QR">
-            <p id="ticket-uuid" class="text-xs font-mono text-slate-500 mt-4 tracking-widest font-bold">UUID</p>
-            <p class="text-[10px] text-slate-400 text-center mt-4">Presenta este código QR al ingresar al evento.</p>
-        </div>
-        
-    </div>
-</div>
 
 <script>
 
@@ -453,10 +463,10 @@ document.getElementById("generalCard").onclick = ()=>{
 
 actualizar();
 
-// Función que genera y descarga localmente el PDF usando html2pdf
+// Función que genera y descarga localmente el PDF con tamaño ajustado
 async function generarPDFLocal(boleto) {
     return new Promise((resolve) => {
-        // Llenar datos en la plantilla
+        // Llenamos los datos en el HTML oculto
         document.getElementById('ticket-tipo').innerText = "70's • 80's • 90's • " + boleto.tipo;
         document.getElementById('ticket-nombre').innerText = boleto.nombre;
         document.getElementById('ticket-correo').innerText = boleto.correo;
@@ -465,26 +475,28 @@ async function generarPDFLocal(boleto) {
         
         const qrImg = document.getElementById('ticket-qr');
         
-        // Cuando el QR termine de cargar, capturamos toda la hoja Carta (pdf-wrapper)
+        // Esperamos a que la imagen del QR termine de cargar en el navegador
         qrImg.onload = () => {
-            const wrapper = document.getElementById('pdf-wrapper');
+            const template = document.getElementById('ticket-template');
             
+            // Forzamos las dimensiones en pixeles para jsPDF para que el PDF 
+            // mida EXACTAMENTE lo que mide la tarjeta del boleto.
             const opt = {
                 margin:       0,
                 filename:     `Boleto_Exelaris_${boleto.folio}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
+                image:        { type: 'jpeg', quality: 1 },
                 html2canvas:  { scale: 2, useCORS: true }, 
-                // Usamos el formato fijo 'letter' (carta)
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                // Usamos formato dinámico basado en las medidas del elemento HTML
+                jsPDF:        { unit: 'px', format: [template.offsetWidth, template.offsetHeight], orientation: 'portrait' }
             };
             
-            // Generar y forzar descarga
-            html2pdf().set(opt).from(wrapper).save().then(() => {
+            // Generamos el PDF localmente
+            html2pdf().set(opt).from(template).save().then(() => {
                 resolve();
             });
         };
         
-        // Generar el QR usando una API pública rápida
+        // URL rápida para generar el QR
         qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + boleto.uuid;
     });
 }
@@ -507,7 +519,7 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
         boton.disabled = true;
         boton.innerHTML = "⏳ Generando boletos...";
 
-        // Enviamos los datos a tu backend real
+        // 1. Enviamos petición al backend
         const respuesta = await fetch(
             "https://fiestaretro-api.onrender.com/api/boletos/comprar",
             {
@@ -529,16 +541,16 @@ document.getElementById("btnComprar").addEventListener("click", async () => {
 
         if(data.success){
 
-            // Generamos y descargamos localmente los PDFs usando la plantilla hoja Carta
+            // 2. Ejecutamos la generación visual de cada boleto comprado
             if(data.boletos && data.boletos.length > 0) {
                 for (const boleto of data.boletos) {
                     await generarPDFLocal(boleto);
                 }
             }
 
-            alert(`✅ ${data.total} boleto(s) generado(s).\n\nEl diseño visual de tu boleto se ha descargado en tu dispositivo.`);
+            alert(`✅ ${data.total} boleto(s) generado(s).\n\nEl archivo se descargó automáticamente.`);
 
-            // Limpiamos los campos
+            // Limpiar campos
             document.getElementById("nombre").value = "";
             document.getElementById("correo").value = "";
             document.getElementById("telefono").value = "";
