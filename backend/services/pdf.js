@@ -15,9 +15,12 @@ async function generarPDF(datos) {
 
             if (!fs.existsSync(carpetaPDF)) {
 
-                fs.mkdirSync(carpetaPDF, {
-                    recursive: true
-                });
+                fs.mkdirSync(
+                    carpetaPDF,
+                    {
+                        recursive: true
+                    }
+                );
 
             }
 
@@ -26,118 +29,83 @@ async function generarPDF(datos) {
                 `boleto-${datos.folio}.pdf`
             );
 
+            console.log('Generando PDF...');
+            console.log(datos);
+
             const doc = new PDFDocument({
-                size: [400, 700],
-                margin: 20
+                size: 'A4',
+                margin: 50
             });
 
             const stream =
-                fs.createWriteStream(rutaPDF);
+                fs.createWriteStream(
+                    rutaPDF
+                );
 
             doc.pipe(stream);
 
-            // Encabezado
+            // PRUEBA SIMPLE
 
-            doc.rect(0, 0, 400, 100)
-               .fill('#1e3a8a');
-
-            doc.fillColor('white')
-               .fontSize(24)
-               .text(
-                    'FIESTA RETRO',
-                    0,
-                    30,
-                    {
-                        width: 400,
-                        align: 'center'
-                    }
+            doc
+                .fontSize(30)
+                .fillColor('red')
+                .text(
+                    'PRUEBA PDF',
+                    50,
+                    50
                 );
 
-            doc.fillColor('black');
+            doc
+                .rect(
+                    50,
+                    120,
+                    300,
+                    100
+                )
+                .stroke();
 
-            // Datos evento
-
-            doc.y = 130;
-
-            doc.fontSize(12);
-
-            doc.text('Fecha: 31 Octubre 2026');
-            doc.text('Hora: 20:00 HRS');
-            doc.text('Lugar: Salon SUTERM');
-            doc.text('Coatzacoalcos, Veracruz');
-
-            doc.moveDown();
-
-            // Datos comprador
-
-            doc.fontSize(14);
-            doc.text(`Nombre: ${datos.nombre}`);
-
-            doc.fontSize(11);
-            doc.text(`Correo: ${datos.correo}`);
-            doc.text(`Folio: ${datos.folio}`);
-            doc.text(`Tipo: ${datos.tipo}`);
-
-            doc.moveDown(2);
-
-            // QR
-
-            const qrBase64 =
-                datos.qr.replace(
-                    /^data:image\/png;base64,/,
-                    ''
+            doc
+                .fontSize(20)
+                .fillColor('black')
+                .text(
+                    `Folio: ${datos.folio}`,
+                    60,
+                    150
                 );
 
-            const qrBuffer =
-                Buffer.from(
-                    qrBase64,
-                    'base64'
+            doc
+                .fontSize(16)
+                .text(
+                    `Nombre: ${datos.nombre}`,
+                    60,
+                    190
                 );
 
-            doc.image(
-                qrBuffer,
-                130,
-                doc.y,
-                {
-                    width: 140
-                }
-            );
-
-            doc.y += 170;
-
-            doc.fontSize(9)
-               .fillColor('gray')
-               .text(
-                    datos.uuid,
-                    {
-                        align: 'center'
-                    }
-                );
-
-            doc.moveDown();
-
-            doc.fillColor('black');
-
-            doc.text(
-                'Presenta este QR al ingresar al evento.',
-                {
-                    align: 'center'
-                }
+            console.log(
+                'Finalizando PDF...'
             );
 
             doc.end();
 
-            stream.on('finish', () => {
+            stream.on(
+                'finish',
+                () => {
 
-                console.log(
-                    `PDF generado: ${rutaPDF}`
-                );
+                    console.log(
+                        `PDF generado: ${rutaPDF}`
+                    );
 
-                resolve(rutaPDF);
+                    resolve(
+                        rutaPDF
+                    );
 
-            });
+                }
+            );
 
-            stream.on('error', reject);
+            stream.on(
+                'error',
+                reject
+            );
 
         } catch (error) {
 
