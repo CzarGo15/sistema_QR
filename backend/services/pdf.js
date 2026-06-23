@@ -29,12 +29,11 @@ async function generarPDF(datos) {
                 `boleto-${datos.folio}.pdf`
             );
 
-            console.log('Generando PDF...');
-            console.log(datos);
-
             const doc = new PDFDocument({
-                size: 'A4',
-                margin: 50
+
+                size: [300, 600],
+                margin: 20
+
             });
 
             const stream =
@@ -44,46 +43,114 @@ async function generarPDF(datos) {
 
             doc.pipe(stream);
 
-            // PRUEBA SIMPLE
+            // ENCABEZADO
 
             doc
-                .fontSize(30)
-                .fillColor('red')
+                .rect(0, 0, 300, 90)
+                .fill('#1e3a8a');
+
+            doc
+                .fillColor('white')
+                .fontSize(24)
                 .text(
-                    'PRUEBA PDF',
-                    50,
-                    50
+                    'FIESTA RETRO',
+                    0,
+                    25,
+                    {
+                        align: 'center'
+                    }
                 );
 
             doc
-                .rect(
-                    50,
-                    120,
-                    300,
-                    100
-                )
-                .stroke();
+                .fontSize(11)
+                .text(
+                    "70's • 80's • 90's",
+                    {
+                        align: 'center'
+                    }
+                );
+
+            doc.moveDown(5);
+
+            // EVENTO
 
             doc
-                .fontSize(20)
+                .fillColor('black')
+                .fontSize(11);
+
+            doc.text('Fecha: 31 Octubre 2026');
+            doc.text('Hora: 20:00 HRS');
+            doc.text('Lugar: Salon SUTERM');
+            doc.text('Coatzacoalcos, Veracruz');
+
+            doc.moveDown();
+
+            // TITULAR
+
+            doc
+                .fontSize(18)
+                .fillColor('#1e3a8a')
+                .text('DATOS DEL BOLETO');
+
+            doc.moveDown();
+
+            doc
+                .fillColor('black')
+                .fontSize(12);
+
+            doc.text(`Nombre: ${datos.nombre}`);
+            doc.text(`Correo: ${datos.correo}`);
+            doc.text(`Folio: ${datos.folio}`);
+            doc.text(`Tipo: ${datos.tipo}`);
+
+            doc.moveDown();
+
+            // QR
+
+            const qrBase64 =
+                datos.qr.replace(
+                    /^data:image\/png;base64,/,
+                    ''
+                );
+
+            const qrBuffer =
+                Buffer.from(
+                    qrBase64,
+                    'base64'
+                );
+
+            doc.image(
+                qrBuffer,
+                80,
+                doc.y,
+                {
+                    width: 140
+                }
+            );
+
+            doc.moveDown(8);
+
+            doc
+                .fontSize(8)
+                .fillColor('gray')
+                .text(
+                    datos.uuid,
+                    {
+                        align: 'center'
+                    }
+                );
+
+            doc.moveDown();
+
+            doc
+                .fontSize(10)
                 .fillColor('black')
                 .text(
-                    `Folio: ${datos.folio}`,
-                    60,
-                    150
+                    'Presenta este QR al ingresar al evento.',
+                    {
+                        align: 'center'
+                    }
                 );
-
-            doc
-                .fontSize(16)
-                .text(
-                    `Nombre: ${datos.nombre}`,
-                    60,
-                    190
-                );
-
-            console.log(
-                'Finalizando PDF...'
-            );
 
             doc.end();
 
