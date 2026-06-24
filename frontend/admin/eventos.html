@@ -326,6 +326,10 @@ rounded-xl">
 </button>
 
 <button
+onclick="cambiarEstado(
+'${evento.id}',
+${evento.activo}
+)"
 class="
 flex-1
 ${evento.activo
@@ -365,7 +369,53 @@ rounded-xl">
 cargarEventos();
 
 function editarEvento(id){
+async function cambiarEstado(
+    id,
+    activo
+){
 
+    try{
+
+        const respuesta =
+        await fetch(
+            `${API}/api/eventos/${id}`,
+            {
+                method:'PUT',
+
+                headers:{
+                    'Content-Type':
+                    'application/json'
+                },
+
+                body:JSON.stringify({
+
+                    activo: !activo
+
+                })
+
+            }
+        );
+
+        const data =
+        await respuesta.json();
+
+        if(data.success){
+
+            cargarEventos();
+
+        }
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            'Error al actualizar'
+        );
+
+    }
+
+}
 
 console.log(
     'Editar:',
