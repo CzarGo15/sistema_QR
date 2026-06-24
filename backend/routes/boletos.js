@@ -35,6 +35,42 @@ router.post('/comprar', async (req, res) => {
 
         }
 
+        /*
+==================================
+OBTENER EVENTO ACTIVO
+==================================
+*/
+
+const eventosSnapshot =
+    await db
+        .collection('eventos')
+        .where('activo', '==', true)
+        .limit(1)
+        .get();
+
+if (eventosSnapshot.empty) {
+
+    return res.status(400).json({
+
+        success: false,
+
+        error: 'No existe un evento activo'
+
+    });
+
+}
+
+const eventoDoc =
+    eventosSnapshot.docs[0];
+
+const evento = {
+
+    id: eventoDoc.id,
+
+    ...eventoDoc.data()
+
+};
+
         const boletos = [];
 
         const contadorRef =
@@ -107,19 +143,53 @@ router.post('/comprar', async (req, res) => {
 
     uuid,
     folio,
+
     nombre,
     correo,
     telefono,
+
     tipo,
     precio,
+
     qr,
+
+    /*
+    ==========================
+    EVENTO
+    ==========================
+    */
+
+    eventoId:
+        evento.id,
+
+    eventoNombre:
+        evento.nombre,
+
+    eventoFecha:
+        evento.fecha,
+
+    eventoHora:
+        evento.hora,
+
+    eventoLugar:
+        evento.lugar,
+
+    eventoDireccion:
+        evento.direccion,
+
+    eventoCiudad:
+        evento.ciudad,
+
+    eventoFlyer:
+        evento.flyer,
 
     estado: 'activo',
 
-    fechaCompra: new Date()
+    fechaCompra:
+        new Date()
 
 };
-
+            
             await db
                 .collection('boletos')
                 .doc(uuid)
@@ -129,17 +199,40 @@ router.post('/comprar', async (req, res) => {
                 `✅ Guardado ${folio}`
             );
 
-            const rutaPDF =
-                await generarPDF({
+           const rutaPDF =
+    await generarPDF({
 
-                    nombre,
-                    correo,
-                    folio,
-                    tipo,
-                    uuid,
-                    qr
+        nombre,
+        correo,
+        telefono,
 
-                });
+        folio,
+        tipo,
+        uuid,
+        qr,
+
+        eventoNombre:
+            evento.nombre,
+
+        eventoFecha:
+            evento.fecha,
+
+        eventoHora:
+            evento.hora,
+
+        eventoLugar:
+            evento.lugar,
+
+        eventoDireccion:
+            evento.direccion,
+
+        eventoCiudad:
+            evento.ciudad,
+
+        eventoFlyer:
+            evento.flyer
+
+    });
 
             console.log(
                 `📄 PDF generado ${folio}`
