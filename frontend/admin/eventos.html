@@ -48,7 +48,7 @@ body{
 
 <div class="flex min-h-screen">
 
-```
+
 <!-- SIDEBAR -->
 
 <aside class="sidebar w-72 p-6">
@@ -133,7 +133,7 @@ body{
     </div>
 
 </main>
-```
+
 
 </div>
 
@@ -309,14 +309,10 @@ async function cargarEventos(){
 
                     </div>
 
-                    <div
-                    class="
-                    mt-6
-                    flex
-                    gap-2">
+                    <div class="mt-6 flex gap-2">
 
-                       <button
-onclick="window.location.href='editar-evento.html?id=${evento.id}'"
+<button
+onclick="editarEvento('${evento.id}')"
 class="
 flex-1
 bg-blue-600
@@ -329,23 +325,24 @@ rounded-xl">
 
 </button>
 
-                        <button
-                        class="
-                        flex-1
-                        ${evento.activo
-                            ? 'bg-green-600'
-                            : 'bg-red-600'}
-                        text-white
-                        py-2
-                        rounded-xl">
+<button
+class="
+flex-1
+${evento.activo
+    ? 'bg-green-600'
+    : 'bg-red-600'}
+text-white
+py-2
+rounded-xl">
 
-                            ${evento.activo
-                                ? 'Activo'
-                                : 'Inactivo'}
+    ${evento.activo
+        ? 'Activo'
+        : 'Inactivo'}
 
-                        </button>
+</button>
 
-                    </div>
+</div>
+                       
 
                 </div>
 
@@ -355,15 +352,31 @@ rounded-xl">
 
         });
 
-    }catch(error){
+    
+}catch(error){
 
-        console.error(error);
+    console.error(error);
 
-    }
+}
+
 
 }
 
 cargarEventos();
+
+function editarEvento(id){
+
+
+console.log(
+    'Editar:',
+    id
+);
+
+window.location.href =
+    `./editar-evento.html?id=${id}`;
+
+
+}
 
 </script>
 
