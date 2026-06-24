@@ -369,6 +369,17 @@ rounded-xl">
 cargarEventos();
 
 function editarEvento(id){
+
+    console.log(
+        'Editar:',
+        id
+    );
+
+    window.location.href =
+        `./editar-evento.html?id=${id}`;
+
+}
+
 async function cambiarEstado(
     id,
     activo
@@ -381,18 +392,12 @@ async function cambiarEstado(
             `${API}/api/eventos/${id}`,
             {
                 method:'PUT',
-
                 headers:{
-                    'Content-Type':
-                    'application/json'
+                    'Content-Type':'application/json'
                 },
-
                 body:JSON.stringify({
-
                     activo: !activo
-
                 })
-
             }
         );
 
@@ -409,26 +414,12 @@ async function cambiarEstado(
 
         console.error(error);
 
-        alert(
-            'Error al actualizar'
-        );
+        alert('Error al actualizar');
 
     }
 
 }
 
-console.log(
-    'Editar:',
-    id
-);
-
-window.location.href =
-    `./editar-evento.html?id=${id}`;
-
-
-}
-
 </script>
-
 </body>
 </html>
