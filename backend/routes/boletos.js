@@ -5,7 +5,10 @@ const db = require('../firebase');
 
 const generarQR = require('../services/qr');
 const generarPDF = require('../services/pdf');
-const subirPDF = require('../services/storage');
+const {
+    subirPDF,
+    subirFlyer
+} = require('../services/storage');
 
 const router = express.Router();
 
