@@ -224,8 +224,9 @@ EVENTOS
 <div class="relative h-full min-h-[650px]">
 
 <img
-src="https://scontent.fmtt1-1.fna.fbcdn.net/v/t39.30808-6/710575183_927048340385889_4163472683980830342_n.jpg?stp=dst-jpg_tt6&cstp=mx1350x1950&ctp=p526x296&_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_ohc=T7wIBOpUPE0Q7kNvwEFquXb&_nc_oc=Adq3cxC1dE7lx5jkhO9yq5SY-htfAEJytHEn7lnV8TShfla58-QYgLXSFxO4GklZ7_U&_nc_zt=23&_nc_ht=scontent.fmtt1-1.fna&_nc_gid=q5SMky1Zm28Uf5QPcd4bDw&_nc_ss=7b2a8&oh=00_Af_BGp7jY2QylbHful5T4OHtLbcf4afVSkCAuRnAMpBRhg&oe=6A2CBC50"
-alt="Flyer Fiesta Retro" class="w-full h-full object-cover">
+id="flyerEvento"
+src=""
+class="w-full h-full object-cover">
 
 <div class="absolute inset-0 flyer-gradient"></div>
 
@@ -237,21 +238,11 @@ alt="Flyer Fiesta Retro" class="w-full h-full object-cover">
 EXELARIS PRESENTA
 </p>
 
-<h1 class="text-white font-black text-6xl mt-10 leading-none">
+<h1
+id="nombreEvento"
+class="text-white font-black text-6xl mt-10 leading-none">
 
-FIESTA
-
-<span
-class="block
-bg-gradient-to-r
-from-fuchsia-500
-to-cyan-400
-bg-clip-text
-text-transparent">
-
-RETRO
-
-</span>
+Cargando...
 
 </h1>
 
@@ -265,21 +256,28 @@ RETRO
 
 <div class="bg-black/40 rounded-2xl p-5">
 
-<p class="text-yellow-300 text-3xl font-black">
-31 OCTUBRE 2026
+<p
+id="fechaEvento"
+class="text-yellow-300 text-3xl font-black">
+Cargando...
 </p>
 
-<p class="text-cyan-300 mt-2">
-PUERTAS ABREN 20:00 HRS
+<p
+id="horaEvento"
+class="text-cyan-300 mt-2">
+Cargando...
 </p>
 
-<p class="text-white mt-4 font-bold">
-SALÓN SUTERM
+<p
+id="lugarEvento"
+class="text-white mt-4 font-bold">
+Cargando...
 </p>
 
-<p class="text-slate-300 text-sm">
-Av. Mariano Matamoros 1128
-Coatzacoalcos, Veracruz
+<p
+id="direccionEvento"
+class="text-slate-300 text-sm">
+Cargando...
 </p>
 
 </div>
@@ -330,7 +328,9 @@ Acceso preferente
 
 </div>
 
-<p class="text-3xl font-black">
+<p
+id="precioVIP"
+class="text-3xl font-black">
 $350
 </p>
 
@@ -356,7 +356,9 @@ Acceso general
 
 </div>
 
-<p class="text-3xl font-black">
+<p
+id="precioGeneral"
+class="text-3xl font-black">
 $250
 </p>
 
@@ -441,7 +443,70 @@ GENERAR BOLETOS
 
 
 <script>
+async function cargarEventoActivo(){
 
+    const respuesta =
+    await fetch(
+        'https://fiestaretro-api.onrender.com/api/eventos'
+    );
+
+    const eventos =
+    await respuesta.json();
+
+    const evento =
+    eventos.find(
+        e => e.activo === true
+    );
+
+    if(!evento) return;
+
+    document.getElementById(
+        'flyerEvento'
+    ).src =
+    evento.flyer;
+
+    document.getElementById(
+        'nombreEvento'
+    ).innerHTML =
+    evento.nombre;
+
+    document.getElementById(
+        'fechaEvento'
+    ).innerHTML =
+    evento.fecha;
+
+    document.getElementById(
+        'horaEvento'
+    ).innerHTML =
+    'PUERTAS ABREN ' +
+    evento.hora;
+
+    document.getElementById(
+        'lugarEvento'
+    ).innerHTML =
+    evento.lugar;
+
+    document.getElementById(
+        'direccionEvento'
+    ).innerHTML =
+    evento.direccion +
+    '<br>' +
+    evento.ciudad;
+
+    document.getElementById(
+        'precioVIP'
+    ).innerHTML =
+    '$' + evento.precioVIP;
+
+    document.getElementById(
+        'precioGeneral'
+    ).innerHTML =
+    '$' + evento.precioGeneral;
+   precio = evento.precioVIP;
+
+   actualizar();
+
+}
 let precio = 350;
 let tipo = "VIP";
 
@@ -455,23 +520,49 @@ function actualizar(){
 document.getElementById("cantidad").addEventListener("input",actualizar);
 
 document.getElementById("vipCard").onclick = ()=>{
-    tipo="VIP";
-    precio=350;
+
+    tipo = "VIP";
+
+    const precioTexto =
+    document.getElementById(
+        "precioVIP"
+    ).innerText;
+
+    precio =
+    parseInt(
+        precioTexto.replace("$","")
+    );
+
     vipCard.classList.add("selected");
     generalCard.classList.remove("selected");
+
     actualizar();
+
 };
 
 document.getElementById("generalCard").onclick = ()=>{
-    tipo="GENERAL";
-    precio=250;
+
+    tipo = "GENERAL";
+
+    const precioTexto =
+    document.getElementById(
+        "precioGeneral"
+    ).innerText;
+
+    precio =
+    parseInt(
+        precioTexto.replace("$","")
+    );
+
     generalCard.classList.add("selected");
     vipCard.classList.remove("selected");
+
     actualizar();
+  
 };
 
 actualizar();
-
+cargarEventoActivo();
 // Función de generación PDF mejorada y libre de distorsiones
 
    
