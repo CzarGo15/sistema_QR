@@ -160,11 +160,7 @@ FORMATEAR PRECIO
 
 function precio(datos){
 
-    return datos.tipo==="VIP"
-
-        ? `$${datos.precio} MXN`
-
-        : `$${datos.precio} MXN`;
+    return `$${datos.precio} MXN`;
 
 }
 
