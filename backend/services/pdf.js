@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const bwipjs = require('bwip-js');
-
+const sizeOf = require('image-size');
 /*
 ==================================================
 CONFIGURACIÓN GENERAL
@@ -70,7 +70,19 @@ async function descargarImagen(url){
 
         );
 
-        return Buffer.from(response.data);
+        const buffer = Buffer.from(response.data);
+
+        const dimensions = sizeOf(buffer);
+
+        return {
+
+            buffer,
+
+            width: dimensions.width,
+
+            height: dimensions.height
+
+        };
 
     }
 
@@ -83,7 +95,6 @@ async function descargarImagen(url){
     }
 
 }
-
 /*
 ==================================================
 GENERAR CODE128
@@ -279,6 +290,85 @@ async function generarPDF(datos){
                     datos.eventoFlyer
 
                 );
+                /*
+==================================================
+DIBUJAR IMAGEN TIPO COVER
+==================================================
+*/
+
+/*
+==================================================
+DIBUJAR IMAGEN COVER
+==================================================
+*/
+
+function dibujarCover(
+
+    doc,
+
+    image,
+
+    x,
+
+    y,
+
+    width,
+
+    height
+
+){
+
+    const scale = Math.max(
+
+        width / image.width,
+
+        height / image.height
+
+    );
+
+    const newWidth = image.width * scale;
+
+    const newHeight = image.height * scale;
+
+    const posX = x - ((newWidth - width) / 2);
+
+    const posY = y - ((newHeight - height) / 2);
+
+    doc.save();
+
+    doc.rect(
+
+        x,
+
+        y,
+
+        width,
+
+        height
+
+    ).clip();
+
+    doc.image(
+
+        image.buffer,
+
+        posX,
+
+        posY,
+
+        {
+
+            width: newWidth,
+
+            height: newHeight
+
+        }
+
+    );
+
+    doc.restore();
+
+}
 
                 /*
                 ==========================================
@@ -301,9 +391,11 @@ FLYER
 
 if(flyer){
 
-    doc.save();
+    dibujarCover(
 
-    doc.roundedRect(
+        doc,
+
+        flyer,
 
         0,
 
@@ -311,38 +403,9 @@ if(flyer){
 
         PAGE.width,
 
-        HEADER_HEIGHT,
+        HEADER_HEIGHT
 
-        0
-
-    ).clip();
-
-    doc.image(
-
-    flyer,
-
-    0,
-
-    0,
-
-    {
-
-        fit: [
-
-            PAGE.width,
-
-            HEADER_HEIGHT
-
-        ],
-
-        align: "center",
-
-        valign: "center"
-
-    }
-
-);
-    doc.restore();
+    );
 
 }else{
 
@@ -1119,7 +1182,7 @@ doc.fillColor(COLORS.purple)
 .fontSize(12)
 .text(
 
-    "🎟",
+    "B",
 
     35,
 
@@ -1192,7 +1255,7 @@ doc.fillColor(COLORS.purple)
 .fontSize(12)
 .text(
 
-    "💲",
+    "#",
 
     205,
 
