@@ -5,14 +5,14 @@ const axios = require('axios');
 const bwipjs = require('bwip-js');
 
 /*
-====================================================
-CONFIGURACIÓN EXELARIS PDF v2.0
-====================================================
+==================================================
+CONFIGURACIÓN GENERAL
+==================================================
 */
 
 const PAGE = {
 
-    width: 420,
+    width: 390,
 
     height: 980
 
@@ -20,7 +20,7 @@ const PAGE = {
 
 const COLORS = {
 
-    background: "#F4F6F9",
+    background: "#F5F5F7",
 
     white: "#FFFFFF",
 
@@ -30,24 +30,20 @@ const COLORS = {
 
     lightGray: "#E5E7EB",
 
-    blue: "#2563EB",
-
-    indigo: "#4338CA",
-
-    purple: "#7C3AED",
+    purple: "#6D28D9",
 
     gold: "#FACC15",
 
-    red: "#DC2626",
+    blue: "#2563EB",
 
-    success: "#16A34A"
+    green: "#16A34A"
 
 };
 
 /*
-====================================================
+==================================================
 DESCARGAR IMAGEN
-====================================================
+==================================================
 */
 
 async function descargarImagen(url){
@@ -66,7 +62,7 @@ async function descargarImagen(url){
 
             {
 
-                responseType:'arraybuffer',
+                responseType:"arraybuffer",
 
                 timeout:15000
 
@@ -80,7 +76,7 @@ async function descargarImagen(url){
 
     catch(error){
 
-        console.log("Flyer no disponible");
+        console.log("Imagen no disponible");
 
         return null;
 
@@ -89,22 +85,22 @@ async function descargarImagen(url){
 }
 
 /*
-====================================================
+==================================================
 GENERAR CODE128
-====================================================
+==================================================
 */
 
 async function generarBarcode(texto){
 
     return await bwipjs.toBuffer({
 
-        bcid:'code128',
+        bcid:"code128",
 
         text:texto,
 
-        scale:3,
+        scale:2,
 
-        height:14,
+        height:10,
 
         includetext:false
 
@@ -113,9 +109,9 @@ async function generarBarcode(texto){
 }
 
 /*
-====================================================
+==================================================
 FORMATEAR FECHA
-====================================================
+==================================================
 */
 
 function fechaMX(fecha){
@@ -132,15 +128,15 @@ function fechaMX(fecha){
 
         .toLocaleDateString(
 
-            'es-MX',
+            "es-MX",
 
             {
 
-                day:'2-digit',
+                day:"numeric",
 
-                month:'long',
+                month:"long",
 
-                year:'numeric'
+                year:"numeric"
 
             }
 
@@ -157,25 +153,25 @@ function fechaMX(fecha){
 }
 
 /*
-====================================================
+==================================================
 FORMATEAR PRECIO
-====================================================
+==================================================
 */
 
-function precio(tipo){
+function precio(datos){
 
-    return tipo==="VIP"
+    return datos.tipo==="VIP"
 
-        ? "$350 MXN"
+        ? `$${datos.precio} MXN`
 
-        : "$250 MXN";
+        : `$${datos.precio} MXN`;
 
 }
 
 /*
-====================================================
+==================================================
 GENERAR PDF
-====================================================
+==================================================
 */
 
 async function generarPDF(datos){
@@ -194,11 +190,7 @@ async function generarPDF(datos){
 
                 );
 
-                if(
-
-                    !fs.existsSync(carpeta)
-
-                ){
+                if(!fs.existsSync(carpeta)){
 
                     fs.mkdirSync(
 
@@ -240,17 +232,15 @@ async function generarPDF(datos){
 
                         Author:"EXELARIS",
 
-                        Creator:"EXELARIS",
+                        Subject:"Boleto Digital",
 
-                        Subject:"Boleto Digital"
+                        Creator:"EXELARIS EVENTOS"
 
                     }
 
                 });
 
-                const stream =
-
-                fs.createWriteStream(
+                const stream = fs.createWriteStream(
 
                     rutaPDF
 
@@ -259,14 +249,12 @@ async function generarPDF(datos){
                 doc.pipe(stream);
 
                 /*
-                ====================================
+                ==========================================
                 FONDO
-                ====================================
+                ==========================================
                 */
 
-                doc
-
-                .rect(
+                doc.rect(
 
                     0,
 
@@ -285,400 +273,616 @@ async function generarPDF(datos){
                 );
 
                 /*
-                ====================================
+                ==========================================
                 DESCARGAR FLYER
-                ====================================
+                ==========================================
                 */
 
-                const flyer =
-
-                await descargarImagen(
+                const flyer = await descargarImagen(
 
                     datos.eventoFlyer
 
                 );
 
                 /*
-                ====================================
+                ==========================================
                 CONTINÚA PARTE 2
-                ====================================
+                ==========================================
                 */
                 /*
-====================================================
+==================================================
 HEADER PREMIUM
-====================================================
+==================================================
 */
 
-const HEADER_HEIGHT = 250;
+const HEADER_HEIGHT = 210;
 
-if (flyer) {
+/*
+==================================================
+FLYER
+==================================================
+*/
+
+if(flyer){
+
+    doc.save();
+
+    doc.roundedRect(
+
+        0,
+
+        0,
+
+        PAGE.width,
+
+        HEADER_HEIGHT,
+
+        0
+
+    ).clip();
 
     doc.image(
+
         flyer,
+
         0,
+
         0,
+
         {
-            width: PAGE.width,
-            height: HEADER_HEIGHT
+
+            width:PAGE.width,
+
+            height:HEADER_HEIGHT
+
         }
+
     );
 
-} else {
+    doc.restore();
+
+}else{
 
     doc.rect(
+
         0,
+
         0,
+
         PAGE.width,
+
         HEADER_HEIGHT
+
     )
-    .fill(COLORS.indigo);
+
+    .fill(COLORS.black);
 
 }
 
 /*
-====================================================
-DEGRADADO SUPERIOR
-====================================================
+==================================================
+OVERLAY
+==================================================
 */
 
 doc.save();
 
 doc.rect(
+
     0,
+
     0,
+
     PAGE.width,
+
     HEADER_HEIGHT
+
 )
-.fillOpacity(0.28)
+
+.fillOpacity(.45)
+
 .fill("#000000");
 
 doc.restore();
 
 /*
-====================================================
-DEGRADADO INFERIOR
-====================================================
-*/
-
-doc.save();
-
-doc.rect(
-    0,
-    165,
-    PAGE.width,
-    85
-)
-.fillOpacity(0.72)
-.fill("#000000");
-
-doc.restore();
-
-/*
-====================================================
-LOGO EXELARIS
-====================================================
+==================================================
+LOGO EMPRESA
+==================================================
 */
 
 doc.circle(
-    35,
-    35,
+
+    28,
+
+    28,
+
     15
+
 )
+
 .fill(COLORS.white);
 
-doc.fillColor(COLORS.indigo)
+doc.fillColor(COLORS.black)
+
 .font("Helvetica-Bold")
-.fontSize(13)
+
+.fontSize(15)
+
 .text(
+
     "E",
-    30,
-    28
+
+    23,
+
+    20
+
 );
 
+/*
+==================================================
+EXELARIS
+==================================================
+*/
+
 doc.fillColor(COLORS.white)
+
 .font("Helvetica-Bold")
+
 .fontSize(18)
+
 .text(
+
     "EXELARIS",
-    58,
-    23
+
+    52,
+
+    14
+
 );
 
 doc.font("Helvetica")
-.fontSize(9)
+
+.fontSize(8)
+
 .text(
+
     "EVENT MANAGEMENT",
-    58,
-    45
+
+    52,
+
+    34
+
 );
 
 /*
-====================================================
-BADGE VIP / GENERAL
-====================================================
+==================================================
+BADGE VIP
+==================================================
 */
 
 const badgeColor =
-    datos.tipo === "VIP"
-        ? COLORS.gold
-        : COLORS.blue;
 
-const badgeTextColor =
-    datos.tipo === "VIP"
-        ? COLORS.black
-        : COLORS.white;
+datos.tipo==="VIP"
+
+?COLORS.gold
+
+:COLORS.blue;
+
+const badgeText =
+
+datos.tipo==="VIP"
+
+?COLORS.black
+
+:COLORS.white;
 
 doc.roundedRect(
-    305,
-    24,
-    90,
+
+    300,
+
+    18,
+
+    72,
+
     28,
+
     8
-)
-.fill(badgeColor);
 
-doc.fillColor(badgeTextColor)
+)
+
+.fill(
+
+    badgeColor
+
+);
+
+doc.fillColor(
+
+    badgeText
+
+)
+
 .font("Helvetica-Bold")
-.fontSize(12)
+
+.fontSize(13)
+
 .text(
+
     datos.tipo,
-    330,
-    33
+
+    323,
+
+    27
+
 );
 
 /*
-====================================================
+==================================================
 NOMBRE DEL EVENTO
-====================================================
+==================================================
 */
 
 doc.fillColor(COLORS.white)
+
 .font("Helvetica-Bold")
-.fontSize(28)
+
+.fontSize(34)
+
 .text(
-    datos.eventoNombre || "EVENTO",
-    25,
-    170,
+
+    datos.eventoNombre,
+
+    20,
+
+    105,
+
     {
-        width: 370
+
+        width:180
+
     }
+
 );
 
 /*
-====================================================
-FECHA DEL EVENTO
-====================================================
+==================================================
+FECHA
+==================================================
 */
 
 doc.fillColor(COLORS.white)
+
 .font("Helvetica")
-.fontSize(12)
+
+.fontSize(11)
+
 .text(
-    fechaMX(datos.eventoFecha),
-    25,
-    208
+
+    fechaMX(
+
+        datos.eventoFecha
+
+    ),
+
+    22,
+
+    168
+
 );
 
 /*
-====================================================
-LÍNEA DECORATIVA
-====================================================
+==================================================
+LÍNEA MORADA
+==================================================
 */
 
-doc.moveTo(
-    25,
-    238
+doc.rect(
+
+    0,
+
+    HEADER_HEIGHT-4,
+
+    PAGE.width,
+
+    4
+
 )
-.lineTo(
-    395,
-    238
-)
-.lineWidth(1)
-.strokeColor("rgba(255,255,255,0.45)")
-.stroke();
+
+.fill(
+
+    COLORS.purple
+
+);
 
 /*
-====================================================
+==================================================
 CONTINÚA PARTE 3
-====================================================
+==================================================
 */
 /*
-====================================================
-TARJETA INFORMACIÓN DEL EVENTO
-====================================================
+==================================================
+CARD INFORMACIÓN DEL EVENTO
+==================================================
 */
 
-const cardX = 20;
-const cardY = 260;
-const cardWidth = 380;
+const cardX = 18;
+const cardY = 225;
+const cardWidth = 354;
 const cardHeight = 170;
 
 doc.roundedRect(
+
     cardX,
+
     cardY,
+
     cardWidth,
+
     cardHeight,
-    14
+
+    16
+
 )
+
 .fill(COLORS.white);
 
-doc.fillColor(COLORS.indigo)
+/*
+==================================================
+TÍTULO
+==================================================
+*/
+
+doc.fillColor(COLORS.purple)
 .font("Helvetica-Bold")
 .fontSize(15)
 .text(
+
     "INFORMACIÓN DEL EVENTO",
-    cardX + 18,
-    cardY + 16
+
+    cardX + 45,
+
+    cardY + 18
+
 );
 
+/*
+==================================================
+ICONO
+==================================================
+*/
+
+doc.roundedRect(
+
+    cardX + 15,
+
+    cardY + 15,
+
+    18,
+
+    18,
+
+    4
+
+)
+
+.stroke(COLORS.purple);
+
+/*
+==================================================
+SEPARADOR
+==================================================
+*/
+
 doc.moveTo(
-    cardX + 18,
-    cardY + 42
+
+    cardX + 15,
+
+    cardY + 45
+
 )
+
 .lineTo(
-    cardX + cardWidth - 18,
-    cardY + 42
+
+    cardX + cardWidth - 15,
+
+    cardY + 45
+
 )
+
 .lineWidth(.5)
+
 .strokeColor(COLORS.lightGray)
+
 .stroke();
 
 /*
-====================================================
-FILA 1
-====================================================
+==================================================
+FILA FECHA
+==================================================
 */
 
 doc.fillColor(COLORS.gray)
 .font("Helvetica")
 .fontSize(9)
 .text(
+
     "FECHA",
-    cardX + 18,
-    cardY + 58
+
+    cardX + 28,
+
+    cardY + 62
+
 );
 
 doc.fillColor(COLORS.black)
 .font("Helvetica-Bold")
 .fontSize(11)
 .text(
+
     fechaMX(datos.eventoFecha),
-    cardX + 105,
-    cardY + 58
+
+    cardX + 120,
+
+    cardY + 62
+
 );
+
+/*
+==================================================
+FILA HORA
+==================================================
+*/
 
 doc.fillColor(COLORS.gray)
 .font("Helvetica")
 .fontSize(9)
 .text(
+
     "HORA",
-    cardX + 18,
-    cardY + 80
+
+    cardX + 28,
+
+    cardY + 85
+
 );
 
 doc.fillColor(COLORS.black)
 .font("Helvetica-Bold")
 .fontSize(11)
 .text(
-    datos.eventoHora || "",
-    cardX + 105,
-    cardY + 80
+
+    datos.eventoHora,
+
+    cardX + 120,
+
+    cardY + 85
+
 );
 
 /*
-====================================================
-FILA 2
-====================================================
+==================================================
+FILA LUGAR
+==================================================
 */
 
 doc.fillColor(COLORS.gray)
 .font("Helvetica")
 .fontSize(9)
 .text(
+
     "LUGAR",
-    cardX + 18,
-    cardY + 104
+
+    cardX + 28,
+
+    cardY + 108
+
 );
 
 doc.fillColor(COLORS.black)
 .font("Helvetica-Bold")
 .fontSize(11)
 .text(
-    datos.eventoLugar || "",
-    cardX + 105,
-    cardY + 104,
+
+    datos.eventoLugar,
+
+    cardX + 120,
+
+    cardY + 108,
+
     {
-        width:250
+
+        width:180
+
     }
+
 );
 
 /*
-====================================================
-FILA 3
-====================================================
+==================================================
+FILA DIRECCIÓN
+==================================================
 */
 
 doc.fillColor(COLORS.gray)
 .font("Helvetica")
 .fontSize(9)
 .text(
+
     "DIRECCIÓN",
-    cardX + 18,
-    cardY + 126
+
+    cardX + 28,
+
+    cardY + 132
+
 );
 
 doc.fillColor(COLORS.black)
 .font("Helvetica")
 .fontSize(10)
 .text(
-    datos.eventoDireccion || "",
-    cardX + 105,
-    cardY + 126,
+
+    datos.eventoDireccion,
+
+    cardX + 120,
+
+    cardY + 132,
+
     {
-        width:250
+
+        width:180
+
     }
+
 );
 
 /*
-====================================================
-FILA 4
-====================================================
+==================================================
+FILA CIUDAD
+==================================================
 */
 
 doc.fillColor(COLORS.gray)
 .font("Helvetica")
 .fontSize(9)
 .text(
+
     "CIUDAD",
-    cardX + 18,
-    cardY + 148
+
+    cardX + 28,
+
+    cardY + 155
+
 );
 
 doc.fillColor(COLORS.black)
 .font("Helvetica")
 .fontSize(10)
 .text(
-    datos.eventoCiudad || "",
-    cardX + 105,
-    cardY + 148
+
+    datos.eventoCiudad,
+
+    cardX + 120,
+
+    cardY + 155
+
 );
 
 /*
-====================================================
+==================================================
 CONTINÚA PARTE 4
-====================================================
+==================================================
 */
-                
- /*
-====================================================
-TARJETA TITULAR
-====================================================
+/*
+==================================================
+CARD TITULAR DEL BOLETO
+==================================================
 */
 
-const buyerX = 20;
-const buyerY = 450;
-const buyerWidth = 380;
-const buyerHeight = 145;
+const buyerX = 18;
+const buyerY = 415;
+const buyerWidth = 354;
+const buyerHeight = 95;
 
 doc.roundedRect(
 
@@ -690,33 +894,37 @@ doc.roundedRect(
 
     buyerHeight,
 
-    14
+    16
 
 )
-.fill("#EEF4FF");
+
+.fill("#F8FAFC");
 
 /*
-====================================================
-TÍTULO
-====================================================
+==================================================
+ICONO PERSONA
+==================================================
 */
 
-doc.fillColor(COLORS.purple)
-.font("Helvetica-Bold")
-.fontSize(15)
-.text(
+doc.circle(
 
-    "TITULAR DEL BOLETO",
+    buyerX + 24,
 
-    buyerX + 18,
+    buyerY + 26,
 
-    buyerY + 16
+    8
 
-);
+)
+
+.strokeColor(COLORS.purple)
+
+.lineWidth(1.5)
+
+.stroke();
 
 doc.moveTo(
 
-    buyerX + 18,
+    buyerX + 16,
 
     buyerY + 42
 
@@ -724,9 +932,59 @@ doc.moveTo(
 
 .lineTo(
 
-    buyerX + buyerWidth - 18,
+    buyerX + 32,
 
     buyerY + 42
+
+)
+
+.lineWidth(1.5)
+
+.strokeColor(COLORS.purple)
+
+.stroke();
+
+/*
+==================================================
+TÍTULO
+==================================================
+*/
+
+doc.fillColor(COLORS.purple)
+
+.font("Helvetica-Bold")
+
+.fontSize(15)
+
+.text(
+
+    "TITULAR DEL BOLETO",
+
+    buyerX + 45,
+
+    buyerY + 18
+
+);
+
+/*
+==================================================
+SEPARADOR
+==================================================
+*/
+
+doc.moveTo(
+
+    buyerX + 15,
+
+    buyerY + 48
+
+)
+
+.lineTo(
+
+    buyerX + buyerWidth - 15,
+
+    buyerY + 48
 
 )
 
@@ -737,194 +995,109 @@ doc.moveTo(
 .stroke();
 
 /*
-====================================================
+==================================================
 NOMBRE
-====================================================
+==================================================
 */
 
 doc.fillColor(COLORS.black)
+
 .font("Helvetica-Bold")
-.fontSize(18)
-.text(
 
-    datos.nombre || "",
-
-    buyerX + 18,
-
-    buyerY + 55,
-
-    {
-
-        width:330
-
-    }
-
-);
-
-/*
-====================================================
-CORREO
-====================================================
-*/
-
-doc.fillColor(COLORS.gray)
-.font("Helvetica")
-.fontSize(11)
-.text(
-
-    datos.correo || "",
-
-    buyerX + 18,
-
-    buyerY + 84,
-
-    {
-
-        width:330
-
-    }
-
-);
-
-/*
-====================================================
-TELÉFONO
-====================================================
-*/
-
-doc.fillColor(COLORS.gray)
-.font("Helvetica")
-.fontSize(11)
-.text(
-
-    datos.telefono || "",
-
-    buyerX + 18,
-
-    buyerY + 106
-
-);
-
-/*
-====================================================
-FOLIO
-====================================================
-*/
-
-const boxY = 615;
-
-doc.roundedRect(
-
-    20,
-
-    boxY,
-
-    175,
-
-    88,
-
-    12
-
-)
-
-.fill(COLORS.black);
-
-doc.fillColor(COLORS.white)
-.font("Helvetica")
-.fontSize(10)
-.text(
-
-    "FOLIO",
-
-    35,
-
-    boxY + 16
-
-);
-
-doc.fillColor(COLORS.gold)
-.font("Helvetica-Bold")
 .fontSize(20)
+
 .text(
 
-    datos.folio,
+    datos.nombre || "SIN NOMBRE",
 
-    35,
+    buyerX + 18,
 
-    boxY + 38
+    buyerY + 60,
+
+    {
+
+        width:320
+
+    }
 
 );
 
 /*
-====================================================
-PRECIO
-====================================================
+==================================================
+TIPO DE BOLETO
+==================================================
 */
 
 doc.roundedRect(
 
-    225,
+    buyerX + 255,
 
-    boxY,
+    buyerY + 18,
 
-    175,
+    80,
 
-    88,
+    24,
 
-    12
+    8
 
 )
 
-.fill(COLORS.blue);
+.fill(
 
-doc.fillColor(COLORS.white)
-.font("Helvetica")
-.fontSize(10)
-.text(
+    datos.tipo === "VIP"
 
-    "PRECIO",
+    ? COLORS.gold
 
-    240,
-
-    boxY + 16
+    : COLORS.blue
 
 );
 
-doc.font("Helvetica-Bold")
-.fontSize(22)
+doc.fillColor(
+
+    datos.tipo === "VIP"
+
+    ? COLORS.black
+
+    : COLORS.white
+
+)
+
+.font("Helvetica-Bold")
+
+.fontSize(11)
+
 .text(
 
-    precio(datos.tipo),
+    datos.tipo,
 
-    240,
+    buyerX + 280,
 
-    boxY + 38
+    buyerY + 25
 
 );
 
 /*
-====================================================
+==================================================
 CONTINÚA PARTE 5
-====================================================
+==================================================
+*/
+/*
+==================================================
+CARD RESUMEN
+==================================================
 */
 
-            /*
-====================================================
-TARJETA DE ACCESO
-====================================================
-*/
-
-const qrY = 725;
+const infoY = 530;
 
 doc.roundedRect(
 
-    20,
+    18,
 
-    qrY,
+    infoY,
 
-    380,
+    354,
 
-    150,
+    58,
 
     14
 
@@ -933,37 +1106,69 @@ doc.roundedRect(
 .fill(COLORS.white);
 
 /*
-====================================================
-TÍTULO
-====================================================
+==================================================
+ICONO FOLIO
+==================================================
 */
 
-doc.fillColor(COLORS.indigo)
+doc.fillColor(COLORS.purple)
 .font("Helvetica-Bold")
-.fontSize(15)
+.fontSize(12)
 .text(
 
-    "ACCESO AL EVENTO",
+    "🎟",
 
     35,
 
-    qrY + 15
+    infoY + 16
 
 );
 
+doc.fillColor(COLORS.gray)
+.font("Helvetica")
+.fontSize(8)
+.text(
+
+    "FOLIO",
+
+    60,
+
+    infoY + 12
+
+);
+
+doc.fillColor(COLORS.black)
+.font("Helvetica-Bold")
+.fontSize(11)
+.text(
+
+    datos.folio,
+
+    60,
+
+    infoY + 28
+
+);
+
+/*
+==================================================
+SEPARADOR
+==================================================
+*/
+
 doc.moveTo(
 
-    35,
+    185,
 
-    qrY + 40
+    infoY + 10
 
 )
 
 .lineTo(
 
-    385,
+    185,
 
-    qrY + 40
+    infoY + 48
 
 )
 
@@ -974,9 +1179,127 @@ doc.moveTo(
 .stroke();
 
 /*
-====================================================
+==================================================
+PRECIO
+==================================================
+*/
+
+doc.fillColor(COLORS.purple)
+.font("Helvetica-Bold")
+.fontSize(12)
+.text(
+
+    "💲",
+
+    205,
+
+    infoY + 16
+
+);
+
+doc.fillColor(COLORS.gray)
+.font("Helvetica")
+.fontSize(8)
+.text(
+
+    "PRECIO",
+
+    228,
+
+    infoY + 12
+
+);
+
+doc.fillColor(COLORS.black)
+.font("Helvetica-Bold")
+.fontSize(11)
+.text(
+
+    precio(datos),
+
+    228,
+
+    infoY + 28
+
+);
+
+/*
+==================================================
+CONTINÚA PARTE 6
+==================================================
+*/
+/*
+==================================================
+CARD ACCESO
+==================================================
+*/
+
+const qrY = 605;
+
+doc.roundedRect(
+
+    18,
+
+    qrY,
+
+    354,
+
+    220,
+
+    18
+
+)
+
+.fill(COLORS.white);
+
+/*
+==================================================
+TÍTULO
+==================================================
+*/
+
+doc.fillColor(COLORS.purple)
+
+.font("Helvetica-Bold")
+
+.fontSize(16)
+
+.text(
+
+    "ACCESO AL EVENTO",
+
+    95,
+
+    qrY + 18
+
+);
+
+/*
+==================================================
+SUBTÍTULO
+==================================================
+*/
+
+doc.fillColor(COLORS.gray)
+
+.font("Helvetica")
+
+.fontSize(9)
+
+.text(
+
+    "Presenta este código al ingresar.",
+
+    92,
+
+    qrY + 40
+
+);
+
+/*
+==================================================
 QR
-====================================================
+==================================================
 */
 
 const qrBase64 =
@@ -1003,157 +1326,81 @@ doc.image(
 
     qrBuffer,
 
-    35,
+    120,
 
-    qrY + 55,
+    qrY + 62,
 
     {
 
-        width:90,
+        width:150,
 
-        height:90
+        height:150
 
     }
 
 );
 
 /*
-====================================================
-UUID
-====================================================
+==================================================
+SELLO OFICIAL
+==================================================
 */
 
-doc.fillColor(COLORS.gray)
-.font("Helvetica")
-.fontSize(8)
-.text(
+doc.roundedRect(
 
-    "ID ÚNICO",
+    120,
 
-    145,
+    qrY + 220,
 
-    qrY + 58
+    150,
 
-);
+    22,
 
-doc.fillColor(COLORS.black)
+    8
+
+)
+
+.fill(COLORS.green);
+
+doc.fillColor(COLORS.white)
+
 .font("Helvetica-Bold")
-.fontSize(9)
-.text(
 
-    datos.uuid,
+.fontSize(10)
 
-    145,
-
-    qrY + 74,
-
-    {
-
-        width:220
-
-    }
-
-);
-
-/*
-====================================================
-ESTADO
-====================================================
-*/
-
-doc.fillColor(COLORS.success)
-.font("Helvetica-Bold")
-.fontSize(11)
 .text(
 
     "BOLETO OFICIAL",
 
-    145,
+    154,
 
-    qrY + 104
-
-);
-
-doc.fillColor(COLORS.gray)
-.font("Helvetica")
-.fontSize(9)
-.text(
-
-    "Presenta este código QR al ingresar al evento.",
-
-    145,
-
-    qrY + 122,
-
-    {
-
-        width:210
-
-    }
+    qrY + 227
 
 );
 
 /*
-====================================================
-CONTINÚA PARTE 6
-====================================================
-*/
-
-            /*
-====================================================
-GENERAR CODE128
-====================================================
-*/
-
-const barcodeBuffer =
-await generarBarcode(
-    datos.uuid
-);
-
-/*
-====================================================
-CÓDIGO DE BARRAS
-====================================================
-*/
-
-doc.image(
-
-    barcodeBuffer,
-
-    35,
-
-    845,
-
-    {
-
-        width:330,
-
-        height:42
-
-    }
-
-);
-
-/*
-====================================================
-UUID DEBAJO DEL CÓDIGO
-====================================================
+==================================================
+UUID
+==================================================
 */
 
 doc.fillColor(COLORS.gray)
+
 .font("Helvetica")
-.fontSize(8)
+
+.fontSize(7)
+
 .text(
 
     datos.uuid,
 
-    35,
+    40,
 
-    890,
+    qrY + 250,
 
     {
 
-        width:330,
+        width:310,
 
         align:"center"
 
@@ -1162,176 +1409,225 @@ doc.fillColor(COLORS.gray)
 );
 
 /*
-====================================================
-SELLO OFICIAL
-====================================================
+==================================================
+GENERAR CODE128
+==================================================
 */
 
-doc.roundedRect(
+const barcode =
 
-    320,
+await generarBarcode(
 
-    842,
-
-    65,
-
-    22,
-
-    8
-
-)
-
-.fill(COLORS.success);
-
-doc.fillColor(COLORS.white)
-.font("Helvetica-Bold")
-.fontSize(8)
-.text(
-
-    "VÁLIDO",
-
-    334,
-
-    849
+    datos.uuid
 
 );
 
 /*
-====================================================
-LÍNEA DECORATIVA
-====================================================
+==================================================
+CODE128
+==================================================
 */
 
-doc.moveTo(
+doc.image(
 
-    20,
+    barcode,
 
-    915
+    85,
 
-)
+    qrY + 268,
 
-.lineTo(
+    {
 
-    400,
+        width:220,
 
-    915
+        height:32
 
-)
+    }
 
-.lineWidth(.5)
-
-.strokeColor(COLORS.lightGray)
-
-.stroke();
+);
 
 /*
-====================================================
+==================================================
 CONTINÚA PARTE 7
-====================================================
+==================================================
 */
+/*
+==================================================
+FOOTER
+==================================================
+*/
+
+const footerY = PAGE.height - 50;
 
 /*
-====================================================
-FOOTER
-====================================================
+==================================================
+FONDO
+==================================================
 */
-
-const footerY = 930;
 
 doc.rect(
+
     0,
+
     footerY,
+
     PAGE.width,
+
     50
+
 )
+
 .fill(COLORS.black);
 
 /*
-====================================================
-LOGO EXELARIS
-====================================================
+==================================================
+EMPRESA
+==================================================
 */
 
 doc.fillColor(COLORS.white)
+
 .font("Helvetica-Bold")
-.fontSize(12)
+
+.fontSize(11)
+
 .text(
+
     "EXELARIS",
-    25,
+
+    18,
+
     footerY + 10
+
 );
 
-doc.font("Helvetica")
-.fontSize(8)
-.fillColor("#D1D5DB")
-.text(
-    "EVENT MANAGEMENT",
-    25,
-    footerY + 26
-);
+doc.fillColor("#D1D5DB")
 
-/*
-====================================================
-MENSAJE DE SEGURIDAD
-====================================================
-*/
-
-doc.fillColor(COLORS.white)
 .font("Helvetica")
-.fontSize(8)
-.text(
-    "Este boleto es único e intransferible. El código QR solo puede ser utilizado una vez para ingresar al evento.",
-    120,
-    footerY + 10,
-    {
-        width: 270,
-        align: "right"
-    }
-);
 
-/*
-====================================================
-POWERED BY
-====================================================
-*/
-
-doc.fillColor("#9CA3AF")
-.font("Helvetica")
 .fontSize(7)
+
 .text(
-    "Powered by EXELARIS®",
-    25,
-    footerY + 40
+
+    "EVENT MANAGEMENT",
+
+    18,
+
+    footerY + 25
+
+);
+
+/*
+==================================================
+LEYENDA
+==================================================
+*/
+
+doc.fillColor("#D1D5DB")
+
+.font("Helvetica")
+
+.fontSize(7)
+
+.text(
+
+    "Este boleto es único e intransferible.",
+
+    135,
+
+    footerY + 10,
+
+    {
+
+        width:220,
+
+        align:"right"
+
+    }
+
 );
 
 doc.text(
-    new Date().getFullYear().toString(),
-    360,
-    footerY + 40,
+
+    "El código QR solo puede utilizarse una vez.",
+
+    135,
+
+    footerY + 22,
+
     {
-        width: 35,
-        align: "right"
+
+        width:220,
+
+        align:"right"
+
     }
+
 );
 
 /*
-====================================================
-CONTINÚA PARTE 8
-====================================================
+==================================================
+VERSIÓN
+==================================================
 */
 
-            /*
-====================================================
+doc.fillColor("#6B7280")
+
+.font("Helvetica")
+
+.fontSize(6)
+
+.text(
+
+    "EXELARIS Ticket System v3.0",
+
+    18,
+
+    footerY + 40
+
+);
+
+/*
+==================================================
+AÑO
+==================================================
+*/
+
+doc.text(
+
+    new Date().getFullYear().toString(),
+
+    330,
+
+    footerY + 40,
+
+    {
+
+        width:40,
+
+        align:"right"
+
+    }
+
+);
+
+/*
+==================================================
+CONTINÚA PARTE 8
+==================================================
+*/
+/*
+==================================================
 FINALIZAR PDF
-====================================================
+==================================================
 */
 
 doc.end();
 
 /*
-====================================================
-ESPERAR A QUE TERMINE DE ESCRIBIR
-====================================================
+==================================================
+ESPERAR ESCRITURA
+==================================================
 */
 
 stream.on(
@@ -1342,7 +1638,7 @@ stream.on(
 
         console.log(
 
-            `PDF generado: ${rutaPDF}`
+            `✅ PDF generado: ${rutaPDF}`
 
         );
 
@@ -1356,6 +1652,12 @@ stream.on(
 
 );
 
+/*
+==================================================
+ERROR STREAM
+==================================================
+*/
+
 stream.on(
 
     "error",
@@ -1364,7 +1666,7 @@ stream.on(
 
         console.error(
 
-            "Error al generar PDF:",
+            "❌ Error Stream PDF:",
 
             error
 
@@ -1384,7 +1686,7 @@ stream.on(
 
     console.error(
 
-        "ERROR PDF:",
+        "❌ Error PDF:",
 
         error
 
@@ -1405,9 +1707,9 @@ stream.on(
 }
 
 /*
-====================================================
+==================================================
 EXPORTAR
-====================================================
+==================================================
 */
 
 module.exports = generarPDF;
