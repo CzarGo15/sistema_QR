@@ -319,22 +319,29 @@ if(flyer){
 
     doc.image(
 
-        flyer,
+    flyer,
 
-        0,
+    0,
 
-        0,
+    0,
 
-        {
+    {
 
-            width:PAGE.width,
+        fit: [
 
-            height:HEADER_HEIGHT
+            PAGE.width,
 
-        }
+            HEADER_HEIGHT
 
-    );
+        ],
 
+        align: "center",
+
+        valign: "center"
+
+    }
+
+);
     doc.restore();
 
 }else{
