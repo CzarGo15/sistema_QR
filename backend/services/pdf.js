@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const bwipjs = require('bwip-js');
-const sizeOf = require('image-size');
+const { imageSize } = require('image-size');
 /*
 ==================================================
 CONFIGURACIÓN GENERAL
@@ -72,7 +72,7 @@ async function descargarImagen(url){
 
         const buffer = Buffer.from(response.data);
 
-        const dimensions = sizeOf(buffer);
+        const dimensions = imageSize(buffer);
 
         return {
 
