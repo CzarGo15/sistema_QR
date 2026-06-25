@@ -203,39 +203,35 @@ const evento = {
             );
 
            const rutaPDF =
-    await generarPDF({
+await generarPDF({
 
-        nombre,
-        correo,
-        telefono,
+    nombre,
+    correo,
+    telefono,
 
-        folio,
-        tipo,
-        uuid,
-        qr,
+    folio,
+    tipo,
 
-        eventoNombre:
-            evento.nombre,
+    precio, // ← AGREGAR ESTA LÍNEA
 
-        eventoFecha:
-            evento.fecha,
+    uuid,
+    qr,
 
-        eventoHora:
-            evento.hora,
+    eventoNombre: evento.nombre,
 
-        eventoLugar:
-            evento.lugar,
+    eventoFecha: evento.fecha,
 
-        eventoDireccion:
-            evento.direccion,
+    eventoHora: evento.hora,
 
-        eventoCiudad:
-            evento.ciudad,
+    eventoLugar: evento.lugar,
 
-        eventoFlyer:
-            evento.flyer
+    eventoDireccion: evento.direccion,
 
-    });
+    eventoCiudad: evento.ciudad,
+
+    eventoFlyer: evento.flyer
+
+});
 
             console.log(
                 `📄 PDF generado ${folio}`
