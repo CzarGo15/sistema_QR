@@ -1,661 +1,73 @@
 <!DOCTYPE html>
+
 <html lang="es">
 
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Fiesta Retro</title>
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1">
+
+<title>EXELARIS EVENTOS</title>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+rel="stylesheet">
 
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Librería para convertir HTML a PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<link
+rel="stylesheet"
+href="css/styles.css">
 
-<style>
+<link
+rel="stylesheet"
+href="css/hero.css">
 
-*{
-font-family:'Montserrat',sans-serif;
-}
+<link
+rel="stylesheet"
+href="css/evento.css">
 
-body{
-background:
-linear-gradient(
-135deg,
-#020617,
-#111827,
-#312e81
-);
-min-height:100vh;
-}
+<link
+rel="stylesheet"
+href="css/boletos.css">
 
-.glass{
-background:rgba(255,255,255,.06);
-backdrop-filter:blur(20px);
-border:1px solid rgba(255,255,255,.08);
-}
+<link
+rel="stylesheet"
+href="css/comprador.css">
 
-.neon{
-text-shadow:
-0 0 5px #ff00ff,
-0 0 10px #ff00ff,
-0 0 20px #ff00ff;
-}
+<link
+rel="stylesheet"
+href="css/resumen.css">
 
-.ticket-option{
-transition:.25s;
-cursor:pointer;
-}
-
-.ticket-option:hover{
-transform:translateY(-5px);
-}
-
-.selected{
-border:3px solid #9333ea !important;
-box-shadow:0 0 25px rgba(147,51,234,.6);
-}
-
-.flyer-gradient{
-background:
-linear-gradient(
-180deg,
-rgba(0,0,0,.1),
-rgba(0,0,0,.8)
-);
-}
-
-/* ==========================================
-   ESTILOS ORIGINALES DE TU BOLETO.HTML
-   ========================================== */
-.ticket-card {
-    /* Mantenemos tus sombras en CSS original, pero las anularemos en impresión */
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,.2));
-}
-
-.ticket-divider {
-    position: relative;
-    border-top: 2px dashed #94a3b8;
-    margin: 0 20px;
-}
-
-.ticket-divider::before,
-.ticket-divider::after {
-    content: '';
-    position: absolute;
-    top: -15px;
-    width: 30px;
-    height: 30px;
-    background-color: #ffffff;
-    border-radius: 50%;
-    z-index: 10;
-}
-
-.ticket-divider::before { left: -35px; }
-.ticket-divider::after { right: -35px; }
-
-/* ⚠️ CLAVE PARA EVITAR DISTORSIÓN EN EL PDF ⚠️
-   Al imprimir, quitamos las sombras (que expanden el canvas) 
-   y fijamos rigurosamente el ancho. */
-#impresion-container .ticket-card {
-    box-shadow: none !important;
-    filter: none !important;
-    width: 384px !important;
-    margin: 0 !important;
-}
-
-</style>
+<link
+rel="stylesheet"
+href="css/footer.css">
 
 </head>
 
-<body class="relative">
+<body class="bg-slate-100">
 
-<!-- ==========================================
-     PLANTILLA CON ESTRUCTURA EXACTA DE BOLETO.HTML
-     Usamos las etiquetas {{VARIABLE}} para reemplazar con JS
-     ========================================== -->
-<template id="boleto-template">
-    <div class="ticket-card bg-white w-[384px] max-w-sm rounded-3xl overflow-hidden">
-        
-        <!-- FLYER -->
-        <div class="h-64 w-full bg-cover bg-center relative bg-slate-900">
-            <!-- Usamos img en lugar de background-image para que html2canvas no falle por CORS -->
-            <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800" crossorigin="anonymous" class="absolute inset-0 w-full h-full object-cover">
-            
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-            <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white text-[10px] font-black px-3 py-1.5 rounded-full">
-                Exelaris Presenta
-            </div>
-            <div class="absolute bottom-4 left-5 right-5 text-white">
-                <h1 class="text-3xl font-black leading-none mb-1">Fiesta Retro</h1>
-                <p class="text-sm font-semibold text-blue-400">70's • 80's • 90's • {{TIPO}}</p>
-            </div>
-        </div>
-        
-        <!-- DATOS -->
-        <div class="p-6 bg-white">
-            <div class="grid grid-cols-2 gap-y-5 gap-x-4">
-                <div>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Fecha</p>
-                    <p class="text-sm font-black text-slate-800">31 Octubre 2026</p>
-                </div>
-                <div>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Puertas</p>
-                    <p class="text-sm font-black text-slate-800">20:00 HRS</p>
-                </div>
-                <div class="col-span-2">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Ubicación</p>
-                    <p class="text-sm font-bold text-slate-800">
-                        Salón SUTERM<br>
-                        <span class="text-xs text-slate-500">Av. Mariano Matamoros 1128 Coatzacoalcos, Veracruz</span>
-                    </p>
-                </div>
-                <div class="col-span-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">Titular del boleto</p>
-                    <p class="text-base font-black text-blue-950">{{NOMBRE}}</p>
-                    <p class="text-xs text-slate-500">{{CORREO}}</p>
-                    <p class="text-sm font-bold text-slate-700 mt-1">Folio: {{FOLIO}}</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- SEPARADOR -->
-        <div class="ticket-divider"></div>
-        
-        <!-- QR -->
-        <div class="px-6 pt-8 pb-8 bg-slate-50 flex flex-col items-center">
-            <!-- ID para controlar el onload desde JS -->
-            <img id="ticket-qr" src="{{QR}}" style="width:200px; height:200px;" crossorigin="anonymous" alt="QR">
-            
-            <p class="text-xs font-mono text-slate-500 mt-4 tracking-widest font-bold">{{UUID}}</p>
-            <p class="text-[10px] text-slate-400 text-center mt-4">Presenta este código QR al ingresar al evento.</p>
-        </div>
-        
-    </div>
-</template>
+<div id="hero"></div>
 
-<!-- Contenedor oculto donde renderizamos temporalmente la plantilla -->
-<div id="impresion-container" style="position: absolute; top: 0; left: 0; z-index: -100; opacity: 0.01; pointer-events: none; padding: 10px;"></div>
+<div id="evento"></div>
 
+<div id="boletos"></div>
 
-<div class="container mx-auto px-4 py-10 relative z-10">
+<div id="comprador"></div>
 
-<div class="grid xl:grid-cols-3 gap-8">
+<div id="asistentes"></div>
 
-<!-- LOGO -->
+<div id="resumen"></div>
 
-<div class="glass rounded-3xl overflow-hidden">
+<div id="footer"></div>
 
-<div class="h-full flex flex-col justify-center items-center p-10">
+<script src="js/components.js"></script>
 
-<div
-class="w-36 h-36 rounded-full
-bg-gradient-to-r
-from-fuchsia-500
-to-cyan-400
-flex items-center justify-center">
-
-<span class="text-6xl font-black text-white">
-X
-</span>
-
-</div>
-
-<h1 class="text-white text-6xl font-black mt-6 neon">
-EXELARIS
-</h1>
-
-<p class="text-cyan-300 tracking-[8px] mt-3">
-EVENTOS
-</p>
-
-</div>
-
-</div>
-
-<!-- FLYER -->
-
-<div class="glass rounded-3xl overflow-hidden">
-
-<div class="relative h-full min-h-[650px]">
-
-<img
-id="flyerEvento"
-src=""
-class="w-full h-full object-cover">
-
-<div class="absolute inset-0 flyer-gradient"></div>
-
-<div class="absolute inset-0 p-8 flex flex-col justify-between">
-
-<div class="text-center">
-
-<p class="text-white tracking-[6px] text-sm">
-EXELARIS PRESENTA
-</p>
-
-<h1
-id="nombreEvento"
-class="text-white font-black text-6xl mt-10 leading-none">
-
-Cargando...
-
-</h1>
-
-<p class="text-yellow-300 text-3xl font-bold mt-6">
-70's • 80's • 90's
-</p>
-
-</div>
-
-<div>
-
-<div class="bg-black/40 rounded-2xl p-5">
-
-<p
-id="fechaEvento"
-class="text-yellow-300 text-3xl font-black">
-Cargando...
-</p>
-
-<p
-id="horaEvento"
-class="text-cyan-300 mt-2">
-Cargando...
-</p>
-
-<p
-id="lugarEvento"
-class="text-white mt-4 font-bold">
-Cargando...
-</p>
-
-<p
-id="direccionEvento"
-class="text-slate-300 text-sm">
-Cargando...
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- COMPRA -->
-
-<div class="glass rounded-3xl p-8">
-
-<h2 class="text-white text-4xl font-black">
-PROCESO DE COMPRA
-</h2>
-
-<p class="text-slate-300 mt-2">
-Modo pruebas
-</p>
-
-<div class="mt-8">
-
-<p class="text-white mb-3">
-Tipo de boleto
-</p>
-
-<div class="grid gap-4">
-
-<div
-id="vipCard"
-class="ticket-option selected bg-white rounded-2xl p-5">
-
-<div class="flex justify-between">
-
-<div>
-
-<h3 class="text-purple-700 text-3xl font-black">
-VIP
-</h3>
-
-<p class="text-gray-600">
-Acceso preferente
-</p>
-
-</div>
-
-<p
-id="precioVIP"
-class="text-3xl font-black">
-$350
-</p>
-
-</div>
-
-</div>
-
-<div
-id="generalCard"
-class="ticket-option bg-white rounded-2xl p-5">
-
-<div class="flex justify-between">
-
-<div>
-
-<h3 class="text-blue-600 text-3xl font-black">
-GENERAL
-</h3>
-
-<p class="text-gray-600">
-Acceso general
-</p>
-
-</div>
-
-<p
-id="precioGeneral"
-class="text-3xl font-black">
-$250
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="mt-8">
-
-<label class="text-white">
-Cantidad
-</label>
-
-<input
-id="cantidad"
-type="number"
-value="1"
-min="1"
-max="10"
-class="w-full mt-2 rounded-xl p-4">
-
-</div>
-
-<div class="mt-8 space-y-4">
-
-<input
-id="nombre"
-type="text"
-placeholder="Nombre completo"
-class="w-full rounded-xl p-4">
-
-<input
-id="correo"
-type="email"
-placeholder="Correo electrónico"
-class="w-full rounded-xl p-4">
-
-<input
-id="telefono"
-type="text"
-placeholder="Teléfono"
-class="w-full rounded-xl p-4">
-
-</div>
-
-<div class="mt-8 text-center">
-
-<p
-id="total"
-class="text-white text-5xl font-black">
-
-$350
-
-</p>
-
-</div>
-
-<button
-id="btnComprar"
-class="w-full mt-8
-bg-gradient-to-r
-from-purple-600
-to-fuchsia-500
-text-white
-font-black
-py-5
-rounded-2xl">
-
-GENERAR BOLETOS
-
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<script>
-async function cargarEventoActivo(){
-
-    const respuesta =
-    await fetch(
-        'https://fiestaretro-api.onrender.com/api/eventos'
-    );
-
-    const eventos =
-    await respuesta.json();
-
-    const evento =
-    eventos.find(
-        e => e.activo === true
-    );
-
-    if(!evento) return;
-
-    document.getElementById(
-        'flyerEvento'
-    ).src =
-    evento.flyer;
-
-    document.getElementById(
-        'nombreEvento'
-    ).innerHTML =
-    evento.nombre;
-
-    document.getElementById(
-        'fechaEvento'
-    ).innerHTML =
-    evento.fecha;
-
-    document.getElementById(
-        'horaEvento'
-    ).innerHTML =
-    'PUERTAS ABREN ' +
-    evento.hora;
-
-    document.getElementById(
-        'lugarEvento'
-    ).innerHTML =
-    evento.lugar;
-
-    document.getElementById(
-        'direccionEvento'
-    ).innerHTML =
-    evento.direccion +
-    '<br>' +
-    evento.ciudad;
-
-    document.getElementById(
-        'precioVIP'
-    ).innerHTML =
-    '$' + evento.precioVIP;
-
-    document.getElementById(
-        'precioGeneral'
-    ).innerHTML =
-    '$' + evento.precioGeneral;
-   precio = evento.precioVIP;
-
-   actualizar();
-
-}
-let precio = 350;
-let tipo = "VIP";
-
-const total = document.getElementById("total");
-
-function actualizar(){
-    const cantidad = parseInt(document.getElementById("cantidad").value);
-    total.innerHTML = "$" + (cantidad * precio);
-}
-
-document.getElementById("cantidad").addEventListener("input",actualizar);
-
-document.getElementById("vipCard").onclick = ()=>{
-
-    tipo = "VIP";
-
-    const precioTexto =
-    document.getElementById(
-        "precioVIP"
-    ).innerText;
-
-    precio =
-    parseInt(
-        precioTexto.replace("$","")
-    );
-
-    vipCard.classList.add("selected");
-    generalCard.classList.remove("selected");
-
-    actualizar();
-
-};
-
-document.getElementById("generalCard").onclick = ()=>{
-
-    tipo = "GENERAL";
-
-    const precioTexto =
-    document.getElementById(
-        "precioGeneral"
-    ).innerText;
-
-    precio =
-    parseInt(
-        precioTexto.replace("$","")
-    );
-
-    generalCard.classList.add("selected");
-    vipCard.classList.remove("selected");
-
-    actualizar();
-  
-};
-
-actualizar();
-cargarEventoActivo();
-// Función de generación PDF mejorada y libre de distorsiones
-
-   
-document.getElementById("btnComprar").addEventListener("click", async () => {
-
-    const boton = document.getElementById("btnComprar");
-    const nombre = document.getElementById("nombre").value.trim();
-    const correo = document.getElementById("correo").value.trim();
-    const telefono = document.getElementById("telefono").value.trim();
-    const cantidad = parseInt(document.getElementById("cantidad").value);
-
-    if(!nombre || !correo){
-        alert("Completa nombre y correo");
-        return;
-    }
-
-    try{
-
-        boton.disabled = true;
-        boton.innerHTML = "⏳ Generando boletos...";
-
-        // 1. Enviamos petición al backend
-        const respuesta = await fetch(
-            "https://fiestaretro-api.onrender.com/api/boletos/comprar",
-            {
-                method:"POST",
-                headers:{
-                    "Content-Type": "application/json"
-                },
-                body:JSON.stringify({
-                    nombre,
-                    correo,
-                    telefono,
-                    tipo,
-                    cantidad
-                })
-            }
-        );
-
-        const data = await respuesta.json();
-
-       if(data.success){
-
-    console.log(data);
-
-    if(data.boletos && data.boletos.length > 0){
-
-        for(const boleto of data.boletos){
-
-            if(boleto.pdfUrl){
-
-                window.open(
-                    boleto.pdfUrl,
-                    '_blank'
-                );
-
-            }else{
-
-                console.error(
-                    'No existe pdfUrl',
-                    boleto
-                );
-
-            }
-
-        }
-
-    }
-
-            alert(`✅ ${data.total} boleto(s) generado(s).\n\nEl archivo se descargó automáticamente.`);
-
-            // Limpiar campos
-            document.getElementById("nombre").value = "";
-            document.getElementById("correo").value = "";
-            document.getElementById("telefono").value = "";
-            document.getElementById("cantidad").value = 1;
-            actualizar();
-
-        } else {
-            alert("❌ " + (data.error || "Error desconocido"));
-        }
-
-    }catch(error){
-        console.error("ERROR:", error);
-        alert("❌ No se pudo conectar con el servidor.");
-    }finally{
-        boton.disabled = false;
-        boton.innerHTML = "GENERAR BOLETOS";
-    }
-
-});
-
-</script>
+<script src="js/app.js"></script>
 
 </body>
+
 </html>
